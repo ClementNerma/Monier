@@ -1,6 +1,7 @@
 {
   "extends": "astro/tsconfigs/base",
   "compilerOptions": {
+    // Strictness options
     "strict": true,
     "noImplicitAny": true,
     "noImplicitOverride": true,
@@ -10,5 +11,8 @@
     "noPropertyAccessFromIndexSignature": true,
     "useUnknownInCatchVariables": true,
     "strictPropertyInitialization": true,
+    // JSX configuration
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js"
   }
 }

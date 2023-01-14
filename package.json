@@ -14,7 +14,12 @@
   },
   "dependencies": {
     "@astrojs/node": "^4.0.0",
-    "astro": "^1.9.2"
+    "@astrojs/solid-js": "^1.2.3",
+    "@trpc/client": "^10.9.0",
+    "@trpc/server": "^10.9.0",
+    "astro": "^1.9.2",
+    "solid-js": "^1.4.3",
+    "zod": "^3.20.2"
   },
   "devDependencies": {
     "@types/node": "^18.11.18",
