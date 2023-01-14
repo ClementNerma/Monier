@@ -13,9 +13,14 @@
     "lint": "rome check ./src"
   },
   "dependencies": {
-    "astro": "^1.9.0"
+    "@astrojs/node": "^4.0.0",
+    "astro": "^1.9.2"
   },
   "devDependencies": {
+    "@types/node": "^18.11.18",
     "rome": "^11.0.0"
+  },
+  "volta": {
+    "node": "19.4.0"
   }
 }
