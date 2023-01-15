@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import { atom } from 'nanostores'
-import { map } from '../utils'
+import { map } from '../misc/utils'
 
 type GlobalContext = {
 	db: PrismaClient

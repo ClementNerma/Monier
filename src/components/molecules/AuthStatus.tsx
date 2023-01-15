@@ -1,6 +1,6 @@
 import { createSignal } from 'solid-js'
-import { state } from '../../state'
-import { trpc } from '../../trpc-client'
+import { state } from '../../misc/state'
+import { trpc } from '../../misc/trpc-client'
 
 export const AuthStatus = () => {
 	const [status, setStatus] = createSignal('-')

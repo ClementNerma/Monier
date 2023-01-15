@@ -1,5 +1,5 @@
 import { createSignal } from 'solid-js'
-import { trpc } from '../../trpc-client'
+import { trpc } from '../../misc/trpc-client'
 
 export const RegisterForm = () => {
 	const [email, setEmail] = createSignal('')

@@ -1,6 +1,6 @@
 import type { Session, User } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
-import { map, pick } from '../../utils'
+import { map, pick } from '../../misc/utils'
 import { baseProcedure, createMiddleware, createRouter } from '../router'
 
 export const maybeAuthMiddleware = createMiddleware(async ({ ctx, next }) => {
