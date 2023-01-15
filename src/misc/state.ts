@@ -1,5 +1,5 @@
 import { atom } from 'nanostores'
-import { generateCookieEntry, getCookie } from './cookies'
+import { generateCookieEntry, getCookie } from '../common/cookies'
 
 type LocalStorageData = 'accessToken'
 

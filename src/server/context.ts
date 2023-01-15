@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import { atom } from 'nanostores'
-import { getCookie } from '../misc/cookies'
-import { map } from '../misc/utils'
+import { getCookie } from '../common/cookies'
+import { map } from '../common/utils'
 
 type GlobalContext = {
 	db: PrismaClient
