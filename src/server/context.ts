@@ -1,8 +1,9 @@
-import { PrismaClient } from '@prisma/client'
-import type { AstroCookies } from 'astro/dist/core/cookies'
+import { PrismaClient, Session, User } from '@prisma/client'
+import type { AstroGlobal } from 'astro'
 import { atom } from 'nanostores'
+import { getSession } from './modules/auth'
 
-type GlobalContext = {
+export type GlobalContext = {
 	db: PrismaClient
 }
 
@@ -11,18 +12,25 @@ const context = atom<GlobalContext>({
 })
 
 export type Context = GlobalContext & {
-	origin: 'client' | 'server'
-	cookies: string | AstroCookies | null
+	cookies: string | null
+	server?: {
+		resolvedSession: (Session & { user: User }) | null
+	}
 }
 
 export const createContext = ({ req }: { req: Request }): Context => ({
 	...context.get(),
-	origin: 'client',
 	cookies: req.headers.get('cookie'),
 })
 
-export const createServerContext = (cookies: AstroCookies): Context => ({
-	...context.get(),
-	origin: 'server',
-	cookies,
-})
+export const createServerContext = async (astro: AstroGlobal): Promise<Context> => {
+	const ctx = context.get()
+
+	return {
+		...ctx,
+		cookies: null,
+		server: {
+			resolvedSession: await getSession(astro.cookies, ctx.db),
+		},
+	}
+}

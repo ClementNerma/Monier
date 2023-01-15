@@ -13,7 +13,7 @@ export const appRouter = createRouter({
 
 export type AppRouter = typeof appRouter
 
-export const serverApp = (astro: AstroGlobal) => appRouter.createCaller(createServerContext(astro.cookies))
+export const serverApp = async (astro: AstroGlobal) => appRouter.createCaller(await createServerContext(astro))
 
 export const requestHandler = (req: Request) =>
 	fetchRequestHandler({
