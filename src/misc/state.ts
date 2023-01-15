@@ -1,7 +1,8 @@
 import { atom } from 'nanostores'
+import type { COOKIE_NAMES } from '../common/constants'
 import { generateCookieEntry, getCookie } from '../common/cookies'
 
-type LocalStorageData = 'accessToken'
+type LocalStorageData = typeof COOKIE_NAMES[keyof typeof COOKIE_NAMES]
 
 const readLocal = (data: LocalStorageData): string | null => getCookie(document.cookie, data) ?? null
 const writeLocal = (data: LocalStorageData, value: string) => {

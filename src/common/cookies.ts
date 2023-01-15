@@ -1,6 +1,10 @@
 export function parseCookies(source: string): Map<string, string> {
 	const cookies = new Map<string, string>()
 
+	if (source.trim().length === 0) {
+		return cookies
+	}
+
 	for (const entry of source.split(';')) {
 		const [cookieName, cookieValue, _] = entry.split('=')
 

@@ -1,7 +1,6 @@
 import { PrismaClient } from '@prisma/client'
+import type { AstroCookies } from 'astro/dist/core/cookies'
 import { atom } from 'nanostores'
-import { getCookie } from '../common/cookies'
-import { map } from '../common/utils'
 
 type GlobalContext = {
 	db: PrismaClient
@@ -12,11 +11,18 @@ const context = atom<GlobalContext>({
 })
 
 export type Context = GlobalContext & {
-	authToken: string | null
+	origin: 'client' | 'server'
+	cookies: string | AstroCookies | null
 }
 
-export const createContext = ({ req }: { req: Request }): Context => {
-	const authToken = map(req.headers.get('cookie'), (header) => getCookie(header, 'accessToken'))
+export const createContext = ({ req }: { req: Request }): Context => ({
+	...context.get(),
+	origin: 'client',
+	cookies: req.headers.get('cookie'),
+})
 
-	return { ...context.get(), authToken }
-}
+export const createServerContext = (cookies: AstroCookies): Context => ({
+	...context.get(),
+	origin: 'server',
+	cookies,
+})

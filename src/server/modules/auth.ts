@@ -1,5 +1,7 @@
 import type { Session, User } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
+import { COOKIE_NAMES } from '../../common/constants'
+import { getCookie } from '../../common/cookies'
 import { map, pick } from '../../common/utils'
 import { baseProcedure, createMiddleware, createRouter } from '../router'
 
@@ -13,7 +15,13 @@ export const maybeAuthMiddleware = createMiddleware(async ({ ctx, next }) => {
 			},
 		})
 
-	if (ctx.authToken === null) {
+	const authToken = map(ctx.cookies, (cookies) =>
+		typeof cookies === 'string'
+			? getCookie(cookies, COOKIE_NAMES.accessToken)
+			: cookies.get(COOKIE_NAMES.accessToken)?.value ?? null,
+	)
+
+	if (authToken === null) {
 		return nextWithViewer(null)
 	}
 
@@ -22,7 +30,7 @@ export const maybeAuthMiddleware = createMiddleware(async ({ ctx, next }) => {
 			user: true,
 		},
 		where: {
-			id: ctx.authToken,
+			id: authToken,
 		},
 	})
 
