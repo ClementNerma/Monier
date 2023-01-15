@@ -1,10 +1,17 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { Counter } from '../components/Counter';
+import { LoginForm } from '../components/molecules/LoginForm';
+import { RegisterForm } from '../components/molecules/RegisterForm';
 ---
 
 <Layout title="Welcome to Astro.">
 	<main>
-		<Counter client:only />
+		<h2>Login</h2>
+
+		<LoginForm client:only />
+
+		<h2>Register</h2>
+
+		<RegisterForm client:only />
 	</main>
 </Layout>

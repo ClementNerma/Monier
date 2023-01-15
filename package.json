@@ -10,14 +10,18 @@
     "preview": "astro preview",
     "astro": "astro",
     "format": "rome format ./src",
-    "lint": "rome check ./src"
+    "lint": "rome check ./src",
+    "db:codegen": "prisma generate",
+    "db:push": "prisma db push"
   },
   "dependencies": {
     "@astrojs/node": "^4.0.0",
     "@astrojs/solid-js": "^1.2.3",
+    "@prisma/client": "^4.8.1",
     "@trpc/client": "^10.9.0",
     "@trpc/server": "^10.9.0",
     "astro": "^1.9.2",
+    "prisma": "^4.8.1",
     "solid-js": "^1.4.3",
     "zod": "^3.20.2"
   },
