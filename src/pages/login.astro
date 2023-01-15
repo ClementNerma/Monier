@@ -1,0 +1,14 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { LoginForm } from '../components/molecules/LoginForm';
+---
+
+<Layout title="Login">
+	<main>
+		<h2>Login</h2>
+
+		<LoginForm client:only />
+
+		<a href="/register">Register</a>
+	</main>
+</Layout>

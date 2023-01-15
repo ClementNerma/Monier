@@ -5,7 +5,7 @@ export const RegisterForm = () => {
 	const [email, setEmail] = createSignal('')
 	const [password, setPassword] = createSignal('')
 
-	const [result, setResult] = createSignal<string | null>(null)
+	const [result, setResult] = createSignal(<></>)
 
 	async function register() {
 		setResult('Loading...')
@@ -18,7 +18,13 @@ export const RegisterForm = () => {
 		if (!res.ok) {
 			setResult(`Error: ${res.reason}`)
 		} else {
-			setResult('Successfully registered!')
+			setResult(
+				<>
+					Successfully registered!
+					<br />
+					You may now go to the <a href="/login">login page</a>.
+				</>,
+			)
 		}
 	}
 
