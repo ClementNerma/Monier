@@ -1,6 +1,6 @@
 import { createSignal } from 'solid-js'
-import { accessToken } from '../../misc/state'
-import { trpc } from '../../misc/trpc-client'
+import { accessToken } from '../../state'
+import { trpc } from '../../trpc-client'
 
 export const LoginForm = () => {
 	const [email, setEmail] = createSignal('')

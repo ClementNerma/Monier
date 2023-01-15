@@ -1,6 +1,6 @@
 import { atom } from 'nanostores'
-import type { COOKIE_NAMES } from '../common/constants'
-import { generateCookieEntry, getCookie } from '../common/cookies'
+import type { COOKIE_NAMES } from './common/constants'
+import { generateCookieEntry, getCookie } from './common/cookies'
 
 type LocalStorageData = typeof COOKIE_NAMES[keyof typeof COOKIE_NAMES]
 

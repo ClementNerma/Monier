@@ -1,10 +1,10 @@
 ---
-import { AuthStatus } from '../components/molecules/AuthStatus';
-import Layout from '../layouts/Layout.astro';
-import { isLoggedIn } from '../server/utils/auth';
+import { AuthStatus } from "../components/molecules/AuthStatus";
+import Layout from "../Layout.astro";
+import { isLoggedIn } from "../server/utils/auth";
 
-if (!await isLoggedIn(Astro)) {
-	return Astro.redirect('/')
+if (!(await isLoggedIn(Astro))) {
+	return Astro.redirect("/");
 }
 ---
 
