@@ -2,7 +2,7 @@ import { createRouter } from '../router'
 import { z } from 'zod'
 import { authProcedure, publicProcedure } from './auth'
 import { failed, Fallible, success } from '../types'
-import { hashPassword, verifyPassword, generatePasswordSalt } from '../../misc/crypto'
+import { hashPassword, verifyPassword, generatePasswordSalt } from '../utils/crypto'
 
 export default createRouter({
 	// Create a session
