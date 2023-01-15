@@ -14,7 +14,7 @@ export type Context = GlobalContext & {
 	authToken: string | null
 }
 
-export const getContext = ({ req }: { req: Request }): Context => {
+export const createContext = ({ req }: { req: Request }): Context => {
 	const authToken = map(req.headers.get('authorization'), (header) =>
 		map(header.match(/^Bearer\s(.*)$/), (match) => match[1]!),
 	)

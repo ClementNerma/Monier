@@ -1,5 +1,5 @@
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch'
-import { getContext } from './context'
+import { createContext } from './context'
 import { createRouter } from './router'
 
 import auth from './modules/auth'
@@ -17,5 +17,5 @@ export const requestHandler = (req: Request) =>
 		router: appRouter,
 		endpoint: '/trpc',
 		req,
-		createContext: getContext,
+		createContext,
 	})
