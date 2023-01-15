@@ -1,11 +1,15 @@
 import { atom } from 'nanostores'
-import { getCookie, setCookie, removeCookie } from 'typescript-cookie'
+import { generateCookieEntry, getCookie } from './cookies'
 
 type LocalStorageData = 'accessToken'
 
-const readLocal = (data: LocalStorageData): string | null => getCookie(data) ?? null
-const writeLocal = (data: LocalStorageData, value: string) => setCookie(data, value)
-const eraseLocal = (data: LocalStorageData) => removeCookie(data)
+const readLocal = (data: LocalStorageData): string | null => getCookie(document.cookie, data) ?? null
+const writeLocal = (data: LocalStorageData, value: string) => {
+	document.cookie = generateCookieEntry(data, value)
+}
+const eraseLocal = (data: LocalStorageData) => {
+	document.cookie = generateCookieEntry(data, '')
+}
 
 const localBackedStateItem = (name: LocalStorageData) => {
 	const item = atom(readLocal(name))
