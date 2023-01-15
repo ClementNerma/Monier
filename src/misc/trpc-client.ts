@@ -1,20 +1,20 @@
 import { createTRPCProxyClient, httpBatchLink } from '@trpc/client'
 import type { AppRouter } from '../api'
-import { state } from './state'
+import { accessToken } from './state'
 
 export const trpc = createTRPCProxyClient<AppRouter>({
 	links: [
 		httpBatchLink({
 			url: `${window.location.origin}/trpc`,
 			headers: () => {
-				const accessToken = state.get().accessToken
+				const token = accessToken.get()
 
-				if (accessToken === null) {
+				if (token === null) {
 					return {}
 				}
 
 				return {
-					authorization: `Bearer ${accessToken}`,
+					authorization: `Bearer ${token}`,
 				}
 			},
 		}),

@@ -1,12 +1,12 @@
 import { createSignal } from 'solid-js'
-import { state } from '../../misc/state'
+import { accessToken } from '../../misc/state'
 import { trpc } from '../../misc/trpc-client'
 
 export const AuthStatus = () => {
 	const [status, setStatus] = createSignal('-')
 
-	state.subscribe(async (state) => {
-		if (state.accessToken === null) {
+	accessToken.subscribe(async (accessToken) => {
+		if (accessToken === null) {
 			return setStatus('Not logged in')
 		}
 

@@ -1,5 +1,5 @@
 import { createSignal } from 'solid-js'
-import { state } from '../../misc/state'
+import { accessToken } from '../../misc/state'
 import { trpc } from '../../misc/trpc-client'
 
 export const LoginForm = () => {
@@ -19,9 +19,7 @@ export const LoginForm = () => {
 		if (!res.ok) {
 			setResult(`Error: ${res.reason}`)
 		} else {
-			state.set({
-				accessToken: res.data,
-			})
+			accessToken.set(res.data)
 
 			setResult('Success!')
 		}
