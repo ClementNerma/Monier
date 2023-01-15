@@ -7,13 +7,13 @@ function redirectToLoginPage() {
 	}
 }
 
-export function setupLoginRedirect(accessToken: WritableAtom<string | null>) {
+export function setupAuthRedirect(accessToken: WritableAtom<string | null>) {
 	accessToken.subscribe(async (accessToken) => {
 		if (accessToken === null) {
 			return redirectToLoginPage()
 		}
 
-		const viewer = trpc.auth.viewer.query()
+		const viewer = await trpc.auth.viewer.query()
 
 		if (viewer === null) {
 			return redirectToLoginPage()
