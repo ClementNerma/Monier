@@ -1,11 +1,11 @@
 import { atom } from 'nanostores'
-import { setupAuthRedirect } from './auth-redirect'
+import { getCookie, setCookie, removeCookie } from 'typescript-cookie'
 
 type LocalStorageData = 'accessToken'
 
-const readLocal = (data: LocalStorageData): string | null => localStorage.getItem(data)
-const writeLocal = (data: LocalStorageData, value: string) => localStorage.setItem(data, value)
-const eraseLocal = (data: LocalStorageData) => localStorage.removeItem(data)
+const readLocal = (data: LocalStorageData): string | null => getCookie(data) ?? null
+const writeLocal = (data: LocalStorageData, value: string) => setCookie(data, value)
+const eraseLocal = (data: LocalStorageData) => removeCookie(data)
 
 const localBackedStateItem = (name: LocalStorageData) => {
 	const item = atom(readLocal(name))
@@ -17,5 +17,3 @@ const localBackedStateItem = (name: LocalStorageData) => {
 }
 
 export const accessToken = localBackedStateItem('accessToken')
-
-setupAuthRedirect(accessToken)
