@@ -8,6 +8,7 @@ specifiers:
   '@trpc/server': ^10.9.0
   '@types/node': ^18.11.18
   astro: ^1.9.2
+  nanostores: ^0.7.1
   prisma: ^4.8.1
   rome: ^11.0.0
   solid-js: ^1.4.3
@@ -20,6 +21,7 @@ dependencies:
   '@trpc/client': 10.9.0_@trpc+server@10.9.0
   '@trpc/server': 10.9.0
   astro: 1.9.2_@types+node@18.11.18
+  nanostores: 0.7.1
   prisma: 4.8.1
   solid-js: 1.6.9
   zod: 3.20.2
@@ -2573,6 +2575,11 @@ packages:
     resolution: {integrity: sha512-MqBkQh/OHTS2egovRtLk45wEyNXwF+cokD+1YPf9u5VfJiRdAiRwB2froX5Co9Rh20xs4siNPm8naNotSD6RBw==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
+    dev: false
+
+  /nanostores/0.7.1:
+    resolution: {integrity: sha512-7HenoVpZOjRudHCmAVWKloBTk3+Ozw49KuRWq/pNlEIIVS3x9dID+I5z3Rhjxl1muhHwv4dFhpT+0FebT9jvaA==}
+    engines: {node: ^14.0.0 || ^16.0.0 || >=18.0.0}
     dev: false
 
   /nlcst-to-string/3.1.0:

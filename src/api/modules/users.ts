@@ -1,7 +1,7 @@
 import { createRouter } from '../router'
 import { z } from 'zod'
 import { authProcedure, publicProcedure } from './auth'
-import { failed, success } from '../types'
+import { failed, Fallible, success } from '../types'
 import { hashPassword, verifyPassword, generatePasswordSalt } from '../../crypto'
 
 export default createRouter({
@@ -13,7 +13,7 @@ export default createRouter({
 				password: z.string(),
 			}),
 		)
-		.mutation(async ({ input, ctx }) => {
+		.mutation(async ({ input, ctx }): Promise<Fallible<string>> => {
 			const user = await ctx.db.user.findUnique({
 				where: {
 					email: input.email,
@@ -44,7 +44,7 @@ export default createRouter({
 		}),
 
 	// Destroy current session
-	logout: authProcedure.mutation(async ({ ctx }) => {
+	logout: authProcedure.mutation(async ({ ctx }): Promise<Fallible<void>> => {
 		await ctx.db.session.delete({
 			where: {
 				id: ctx.session.id,
@@ -62,7 +62,7 @@ export default createRouter({
 				password: z.string(),
 			}),
 		)
-		.mutation(async ({ input, ctx: { db } }) => {
+		.mutation(async ({ input, ctx: { db } }): Promise<Fallible<void>> => {
 			if (input.password.trim().length === 0) {
 				return failed('Password is empty')
 			}

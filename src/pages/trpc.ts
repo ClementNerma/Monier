@@ -1,5 +1,5 @@
 import { fetchRequestHandler } from '@trpc/server/adapters/fetch'
-import { APIRoute } from 'astro'
+import type { APIRoute } from 'astro'
 import { appRouter } from '../api'
 import { getContext } from '../api/context'
 

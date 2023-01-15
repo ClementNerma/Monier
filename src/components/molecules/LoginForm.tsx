@@ -1,4 +1,5 @@
 import { createSignal } from 'solid-js'
+import { state } from '../../state'
 import { trpc } from '../../trpc-client'
 
 export const LoginForm = () => {
@@ -18,13 +19,11 @@ export const LoginForm = () => {
 		if (!res.ok) {
 			setResult(`Error: ${res.reason}`)
 		} else {
-			const viewer = await trpc.auth.viewer.query()
+			state.set({
+				accessToken: res.data,
+			})
 
-			if (!viewer) {
-				setResult('Not logged in :(')
-			} else {
-				setResult('Successfully logged in :D')
-			}
+			setResult('Success!')
 		}
 	}
 
