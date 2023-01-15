@@ -1,0 +1,12 @@
+---
+import { AuthStatus } from '../components/molecules/AuthStatus';
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Home">
+	<main>
+		<h2>Home</h2>
+
+		<AuthStatus client:only />
+	</main>
+</Layout>
