@@ -1,5 +1,6 @@
 import { atom } from 'nanostores'
-import { setupLoginRedirect } from './login-redirect'
+import { setupAuthRedirect } from './auth-redirect'
+import { isBrowser } from './utils'
 
 type LocalStorageData = 'accessToken'
 
@@ -18,4 +19,6 @@ const localBackedStateItem = (name: LocalStorageData) => {
 
 export const accessToken = localBackedStateItem('accessToken')
 
-setupLoginRedirect(accessToken)
+if (isBrowser) {
+	setupAuthRedirect(accessToken)
+}

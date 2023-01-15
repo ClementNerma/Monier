@@ -1,3 +1,5 @@
+export const isBrowser = typeof window !== 'undefined'
+
 export function map<T, U>(value: T | null | undefined, mapper: (value: T) => U): U | null {
 	return value !== null && value !== undefined ? mapper(value) : null
 }
