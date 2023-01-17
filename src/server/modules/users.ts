@@ -2,7 +2,7 @@ import { createRouter } from '../router'
 import { z } from 'zod'
 import { authProcedure, publicProcedure } from './auth'
 import { failed, Fallible, success } from '../types'
-import { generateRandomUUID } from '../utils/crypto'
+import { generateRandomUUID } from '../../common/crypto'
 
 export default createRouter({
 	// Register as a new user
