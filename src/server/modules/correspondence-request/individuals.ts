@@ -8,7 +8,7 @@ import { zSymEncrypted } from '../../types'
 import { authProcedure, publicProcedure } from '../auth'
 
 export default createRouter({
-	// From initiator to initiator
+	// From initiator (client) to initiator (server)
 	generateCode: authProcedure
 		.input(
 			z.object({
@@ -37,7 +37,7 @@ export default createRouter({
 			return correspondenceCode
 		}),
 
-	// From target to initiator
+	// From target (client) to initiator (server)
 	getPublicKey: publicProcedure
 		.input(
 			z.object({
@@ -60,16 +60,20 @@ export default createRouter({
 			},
 		),
 
-	// From target to target
+	// From target (client) to target (server)
 	createAnswered: authProcedure
 		.input(
 			z.object({
 				correspondenceInitID: z.string(),
 				correspondenceKeyMK: zSymEncrypted,
+
 				serverUrl: z.string(),
+
+				correspondenceKeyCIPK: z.string(),
+				displayNameCK: zSymEncrypted,
 			}),
 		)
-		.mutation(async ({ ctx, input }) => {
+		.mutation<void>(async ({ ctx, input }) => {
 			await ctx.db.individualLv2ACorrespondenceRequest.create({
 				data: {
 					forUserId: ctx.viewer.id,
@@ -81,9 +85,23 @@ export default createRouter({
 					serverUrl: input.serverUrl,
 				},
 			})
+
+			// TODO: make request to initiator (server) with the provided arguments
+			//       (method: "fillInfos")
+
+			// In case of fail, store it as a task to retry:
+			await ctx.db.taskRetryFillIndividualCorrespondenceRequestInfos.create({
+				data: {
+					fromRequestCorrespondenceInitId: input.correspondenceInitID,
+					correspondenceKeyCIPK: input.correspondenceKeyCIPK,
+
+					userDisplayNameCK: input.displayNameCK.content,
+					userDisplayNameCKIV: input.displayNameCK.iv,
+				},
+			})
 		}),
 
-	// From target to initiator
+	// From target (server) to initiator (server)
 	fillInfos: publicProcedure
 		.input(
 			z.object({
@@ -116,5 +134,195 @@ export default createRouter({
 					userDisplayNameCKIV: input.displayNameCK.iv,
 				},
 			})
+		}),
+
+	// From initiator (server) to initiator (client)
+	pendingFilledRequests: authProcedure.query(({ ctx }) =>
+		ctx.db.individualLv2BCorrespondenceRequest.findMany({
+			select: {
+				id: true,
+				userDisplayNameCK: true,
+				userDisplayNameCKIV: true,
+				// Here we return the correspondence key encrypted with a public key...
+				correspondenceKeyCIPK: true,
+				from: {
+					select: {
+						// ...that couples with this private key!
+						correspondenceInitPrivateKeyMK: true,
+						correspondenceInitPrivateKeyMKIV: true,
+					},
+				},
+			},
+			where: {
+				forUserId: ctx.viewer.id,
+			},
+		}),
+	),
+
+	// From initiator (client) to target (server)
+	answerFilledRequest: publicProcedure
+		.input(
+			z.object({
+				correspondenceInitID: z.string(),
+				userDisplayNameCK: zSymEncrypted,
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const request = await ctx.db.individualLv2ACorrespondenceRequest.findUnique({
+				where: {
+					correspondenceInitID: input.correspondenceInitID,
+				},
+			})
+
+			if (!request) {
+				throw new TRPCError({ code: 'NOT_FOUND', message: 'The provided request was not found' })
+			}
+
+			await ctx.db.$transaction([
+				ctx.db.individualLv3ACorrespondenceRequest.create({
+					data: {
+						forUserId: request.forUserId,
+						fromId: request.id,
+						userDisplayNameCK: input.userDisplayNameCK.content,
+						userDisplayNameCKIV: input.userDisplayNameCK.iv,
+					},
+				}),
+			])
+		}),
+
+	// From target (server) to target (client)
+	pendingFullyFilledRequests: authProcedure.query(({ ctx }) =>
+		ctx.db.individualLv3ACorrespondenceRequest.findMany({
+			select: {
+				userDisplayNameCK: true,
+				userDisplayNameCKIV: true,
+				from: {
+					select: {
+						correspondenceInitID: true,
+						correspondenceKeyMK: true,
+						correspondenceKeyMKIV: true,
+						serverUrl: true,
+					},
+				},
+			},
+			where: {
+				forUserId: ctx.viewer.id,
+			},
+		}),
+	),
+
+	// From target (client) to target (server)
+	markAcceptedRequest: authProcedure
+		.input(
+			z.object({
+				correspondenceInitID: z.string(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const base = await ctx.db.individualLv2ACorrespondenceRequest.findUnique({
+				where: {
+					correspondenceInitID: input.correspondenceInitID,
+				},
+				include: { into: true },
+			})
+
+			if (base === null) {
+				throw new TRPCError({ code: 'NOT_FOUND', message: 'The provided correspondence init. ID was not found' })
+			}
+
+			if (base.forUserId !== ctx.viewer.id) {
+				throw new TRPCError({ code: 'UNAUTHORIZED', message: 'The provided correspondence belongs to another user' })
+			}
+
+			if (!base.into) {
+				throw new TRPCError({ code: 'BAD_REQUEST', message: 'The provided correspondence is not at this stage yet' })
+			}
+
+			const accessToken = generateRandomUUID()
+
+			await ctx.db.$transaction([
+				ctx.db.individualLv3ACorrespondenceRequest.delete({
+					where: {
+						id: base.into.id,
+					},
+				}),
+				ctx.db.correspondence.create({
+					data: {
+						forUserId: ctx.viewer.id,
+
+						accessToken,
+
+						isInitiator: true,
+						isService: false,
+
+						correspondenceKeyMK: base.correspondenceKeyMK,
+						correspondenceKeyMKIV: base.correspondenceKeyMKIV,
+
+						userDisplayNameCK: base.into.userDisplayNameCK,
+						userDisplayNameCKIV: base.into.userDisplayNameCKIV,
+					},
+				}),
+				ctx.db.taskRetryFullyAcceptCorrespondenceRequest.create({
+					data: {
+						fromCorrespondenceAccessToken: accessToken,
+						correspondenceInitId: base.correspondenceInitID,
+					},
+				}),
+			])
+
+			// TODO: contact initiator's server (method: fullyAcceptRequest)
+			// Then destroy the task
+		}),
+
+	// From target (server) to initiator (server)
+	fullyAcceptRequest: publicProcedure
+		.input(
+			z.object({
+				correspondenceInitID: z.string(),
+				accessToken: z.string(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const base = await ctx.db.individualLv1BCorrespondenceRequest.findUnique({
+				where: {
+					correspondenceInitID: input.correspondenceInitID,
+				},
+				include: {
+					into: true,
+				},
+			})
+
+			if (base === null) {
+				throw new TRPCError({ code: 'NOT_FOUND', message: 'The provided correspondence init. ID was not found' })
+			}
+
+			if (!base.into) {
+				throw new TRPCError({ code: 'BAD_REQUEST', message: 'The provided correspondence is not at this stage yet' })
+			}
+
+			await ctx.db.$transaction([
+				ctx.db.individualLv2BCorrespondenceRequest.delete({
+					where: {
+						id: base.into.id,
+					},
+				}),
+				ctx.db.correspondence.create({
+					data: {
+						forUserId: base.forUserId,
+
+						isInitiator: false,
+						isService: false,
+
+						accessToken: input.accessToken,
+
+						// TODO: correspondenceKeyMK + MKIV
+						correspondenceKeyMK: 'TODO',
+						correspondenceKeyMKIV: 'TODO',
+
+						userDisplayNameCK: base.into.userDisplayNameCK,
+						userDisplayNameCKIV: base.into.userDisplayNameCKIV,
+					},
+				}),
+			])
 		}),
 })
