@@ -2,21 +2,52 @@ import { createRouter } from '../router'
 import { z } from 'zod'
 import { authProcedure, publicProcedure } from './auth'
 import { failed, Fallible, success } from '../types'
-import { hashPassword, verifyPassword, generatePasswordSalt } from '../utils/crypto'
+import { generateRandomUUID } from '../utils/crypto'
 
 export default createRouter({
+	// Register as a new user
+	register: publicProcedure
+		.input(
+			z.object({
+				usernameHash: z.string(),
+				passwordProof: z.string(),
+				masterKeyPK: z.string(),
+			}),
+		)
+		.mutation(async ({ input, ctx: { db } }): Promise<Fallible<void>> => {
+			const existing = await db.user.count({
+				where: {
+					usernameHash: input.usernameHash,
+				},
+			})
+
+			if (existing > 0) {
+				return failed('This username is already taken')
+			}
+
+			await db.user.create({
+				data: {
+					usernameHash: input.usernameHash,
+					passwordProof: input.passwordProof,
+					masterKeyPK: input.masterKeyPK,
+				},
+			})
+
+			return success(void 0)
+		}),
+
 	// Create a session
 	login: publicProcedure
 		.input(
 			z.object({
-				email: z.string(),
-				password: z.string(),
+				usernameHash: z.string(),
+				passwordProof: z.string(),
 			}),
 		)
 		.mutation(async ({ input, ctx }): Promise<Fallible<string>> => {
 			const user = await ctx.db.user.findUnique({
 				where: {
-					email: input.email,
+					usernameHash: input.usernameHash,
 				},
 			})
 
@@ -24,18 +55,13 @@ export default createRouter({
 				return failed('Provided user was not found')
 			}
 
-			const passwordMatches = await verifyPassword(
-				Buffer.from(user.passwordHash, 'hex'),
-				Buffer.from(user.passwordSalt, 'hex'),
-				input.password,
-			)
-
-			if (!passwordMatches) {
-				return failed('Wrong password')
+			if (user.passwordProof !== input.passwordProof) {
+				return failed('Invalid password proof provided')
 			}
 
 			const session = await ctx.db.session.create({
 				data: {
+					accessToken: generateRandomUUID(),
 					userId: user.id,
 				},
 			})
@@ -53,41 +79,4 @@ export default createRouter({
 
 		return success(void 0)
 	}),
-
-	// Register as a new user
-	register: publicProcedure
-		.input(
-			z.object({
-				email: z.string(),
-				password: z.string(),
-			}),
-		)
-		.mutation(async ({ input, ctx: { db } }): Promise<Fallible<void>> => {
-			if (input.password.trim().length === 0) {
-				return failed('Password is empty')
-			}
-
-			const existing = await db.user.count({
-				where: {
-					email: input.email,
-				},
-			})
-
-			if (existing > 0) {
-				return failed('This e-mail address is already taken')
-			}
-
-			const passwordSalt = await generatePasswordSalt()
-			const passwordHash = await hashPassword(input.password, passwordSalt)
-
-			await db.user.create({
-				data: {
-					email: input.email,
-					passwordHash: passwordHash.toString('hex'),
-					passwordSalt: passwordSalt.toString('hex'),
-				},
-			})
-
-			return success(void 0)
-		}),
 })

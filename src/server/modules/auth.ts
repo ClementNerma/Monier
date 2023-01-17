@@ -68,5 +68,5 @@ export const authProcedure = maybeAuthProcedure.use(async ({ ctx, next }) => {
 })
 
 export default createRouter({
-	viewer: maybeAuthProcedure.query(({ ctx }) => map(ctx.viewer, (viewer) => pick(viewer, ['id', 'email']))),
+	viewer: maybeAuthProcedure.query(({ ctx }) => map(ctx.viewer, (viewer) => pick(viewer, ['id', 'masterKeyPK']))),
 })
