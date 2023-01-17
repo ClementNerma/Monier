@@ -1,11 +1,12 @@
 import { z } from 'zod'
-import { generateRandomUUID } from '../../common/crypto'
-import { createRouter } from '../router'
-import { failed, Fallible, success, zSymEncrypted } from '../types'
-import { authProcedure, publicProcedure } from './auth'
+import { generateRandomUUID } from '../../../common/crypto'
+import { createRouter } from '../../router'
+import { failed, Fallible, success, zSymEncrypted } from '../../types'
+import { authProcedure, publicProcedure } from '../auth'
 
 export default createRouter({
-	generateCorrespondenceCode: authProcedure
+	// From initiator to initiator
+	generateCode: authProcedure
 		.input(
 			z.object({
 				correspondenceInitPrivateKeyMK: zSymEncrypted,
@@ -33,7 +34,8 @@ export default createRouter({
 			return correspondenceCode
 		}),
 
-	createAnsweredCorrespondenceRequest: authProcedure
+	// From target to target
+	createAnswered: authProcedure
 		.input(
 			z.object({
 				correspondenceInitID: z.string(),
@@ -55,7 +57,8 @@ export default createRouter({
 			})
 		}),
 
-	fillCorrespondenceRequestInfos: publicProcedure
+	// From target to initiator
+	fillInfos: publicProcedure
 		.input(
 			z.object({
 				correspondenceInitID: z.string(),

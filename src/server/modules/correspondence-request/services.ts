@@ -1,9 +1,9 @@
 import { z } from 'zod'
-import { generateRandomUUID } from '../../common/crypto'
-import { pick } from '../../common/utils'
-import { createRouter } from '../router'
-import { failed, FallibleSingle, success, zSymEncrypted, SymEncrypted } from '../types'
-import { authProcedure } from './auth'
+import { generateRandomUUID } from '../../../common/crypto'
+import { pick } from '../../../common/utils'
+import { createRouter } from '../../router'
+import { failed, FallibleSingle, success, zSymEncrypted, SymEncrypted } from '../../types'
+import { authProcedure } from '../auth'
 
 export default createRouter({
 	createCorrespondenceRequest: authProcedure
