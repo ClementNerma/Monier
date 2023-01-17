@@ -1,5 +1,7 @@
+import type { IndividualLv1BCorrespondenceRequest } from '@prisma/client'
 import { z } from 'zod'
 import { generateRandomUUID } from '../../../common/crypto'
+import { pick } from '../../../common/utils'
 import { createRouter } from '../../router'
 import { failed, Fallible, success, zSymEncrypted } from '../../types'
 import { authProcedure, publicProcedure } from '../auth'
@@ -33,6 +35,29 @@ export default createRouter({
 
 			return correspondenceCode
 		}),
+
+	// From target to initiator
+	getPublicKey: publicProcedure
+		.input(
+			z.object({
+				correspondenceCode: z.string(),
+			}),
+		)
+		.query<Fallible<Pick<IndividualLv1BCorrespondenceRequest, 'correspondenceInitPublicKey' | 'correspondenceInitID'>>>(
+			async ({ ctx, input }) => {
+				const request = await ctx.db.individualLv1BCorrespondenceRequest.findUnique({
+					where: {
+						correspondenceCode: input.correspondenceCode,
+					},
+				})
+
+				if (!request) {
+					return failed('Provided correspondence init. ID was not found')
+				}
+
+				return success(pick(request, ['correspondenceInitPublicKey', 'correspondenceInitID']))
+			},
+		),
 
 	// From target to target
 	createAnswered: authProcedure
