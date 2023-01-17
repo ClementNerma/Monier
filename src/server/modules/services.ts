@@ -74,7 +74,7 @@ export default createRouter({
 
 			const correspondence = await ctx.db.correspondence.create({
 				data: {
-					correspondenceId: generateRandomUUID(),
+					accessToken: generateRandomUUID(),
 					displayNameCK: input.displayNameCK.content,
 					displayNameCKIV: input.displayNameCK.iv,
 					isService: true,
