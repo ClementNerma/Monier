@@ -17,13 +17,13 @@
   "dependencies": {
     "@astrojs/node": "^4.0.0",
     "@astrojs/solid-js": "^1.2.3",
-    "@prisma/client": "^4.8.1",
+    "@prisma/client": "^4.9.0",
     "@trpc/client": "^10.9.0",
     "@trpc/server": "^10.9.0",
     "astro": "^1.9.2",
     "nanostores": "^0.7.1",
-    "prisma": "^4.8.1",
-    "solid-js": "^1.4.3",
+    "prisma": "^4.9.0",
+    "solid-js": "^1.6.9",
     "zod": "^3.20.2"
   },
   "devDependencies": {
