@@ -1,8 +1,9 @@
+import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import { generateRandomUUID } from '../../../common/crypto'
 import { pick } from '../../../common/utils'
 import { createRouter } from '../../router'
-import { failed, FallibleSingle, success, zSymEncrypted, SymEncrypted } from '../../types'
+import { zSymEncrypted, SymEncrypted } from '../../types'
 import { authProcedure } from '../auth'
 
 export default createRouter({
@@ -31,25 +32,28 @@ export default createRouter({
 				correspondenceRequestId: z.string(),
 			}),
 		)
-		.query<FallibleSingle<'correspondenceKey', SymEncrypted>>(async ({ ctx, input }) => {
+		.query<{ correspondenceKey: SymEncrypted }>(async ({ ctx, input }) => {
 			const request = await ctx.db.serviceCorrespondenceRequest.findUnique({
 				where: pick(input, ['correspondenceRequestId']),
 			})
 
 			if (!request) {
-				return failed('Provided correspondence request was not found')
+				throw new TRPCError({ code: 'NOT_FOUND', message: 'Provided correspondence request was not found' })
 			}
 
 			if (request.forUserId !== ctx.viewer.id) {
-				return failed('Provided correspondence request belongs to another user')
+				throw new TRPCError({
+					code: 'UNAUTHORIZED',
+					message: 'Provided correspondence request belongs to another user',
+				})
 			}
 
-			return success({
+			return {
 				correspondenceKey: {
 					content: request.correspondenceKeyMK,
 					iv: request.correspondenceKeyMKIV,
 				},
-			})
+			}
 		}),
 
 	confirmCorrespondence: authProcedure
@@ -59,17 +63,20 @@ export default createRouter({
 				displayNameCK: zSymEncrypted,
 			}),
 		)
-		.mutation<FallibleSingle<'correspondenceId', string>>(async ({ ctx, input }) => {
+		.mutation<{ correspondenceId: string }>(async ({ ctx, input }) => {
 			const request = await ctx.db.serviceCorrespondenceRequest.findUnique({
 				where: pick(input, ['correspondenceRequestId']),
 			})
 
 			if (!request) {
-				return failed('Provided correspondence request was not found')
+				throw new TRPCError({ code: 'NOT_FOUND', message: 'Provided correspondence request was not found' })
 			}
 
 			if (request.forUserId !== ctx.viewer.id) {
-				return failed('Provided correspondence request belongs to another user')
+				throw new TRPCError({
+					code: 'UNAUTHORIZED',
+					message: 'Provided correspondence request belongs to another user',
+				})
 			}
 
 			const correspondence = await ctx.db.correspondence.create({
@@ -82,8 +89,8 @@ export default createRouter({
 				},
 			})
 
-			return success({
+			return {
 				correspondenceId: correspondence.id,
-			})
+			}
 		}),
 })

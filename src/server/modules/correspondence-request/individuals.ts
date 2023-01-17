@@ -1,9 +1,10 @@
 import type { IndividualLv1BCorrespondenceRequest } from '@prisma/client'
+import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import { generateRandomUUID } from '../../../common/crypto'
 import { pick } from '../../../common/utils'
 import { createRouter } from '../../router'
-import { failed, Fallible, success, zSymEncrypted } from '../../types'
+import { zSymEncrypted } from '../../types'
 import { authProcedure, publicProcedure } from '../auth'
 
 export default createRouter({
@@ -43,7 +44,7 @@ export default createRouter({
 				correspondenceCode: z.string(),
 			}),
 		)
-		.query<Fallible<Pick<IndividualLv1BCorrespondenceRequest, 'correspondenceInitPublicKey' | 'correspondenceInitID'>>>(
+		.query<Pick<IndividualLv1BCorrespondenceRequest, 'correspondenceInitPublicKey' | 'correspondenceInitID'>>(
 			async ({ ctx, input }) => {
 				const request = await ctx.db.individualLv1BCorrespondenceRequest.findUnique({
 					where: {
@@ -52,10 +53,10 @@ export default createRouter({
 				})
 
 				if (!request) {
-					return failed('Provided correspondence init. ID was not found')
+					throw new TRPCError({ code: 'NOT_FOUND', message: 'Provided correspondence init. ID was not found' })
 				}
 
-				return success(pick(request, ['correspondenceInitPublicKey', 'correspondenceInitID']))
+				return pick(request, ['correspondenceInitPublicKey', 'correspondenceInitID'])
 			},
 		),
 
@@ -92,7 +93,7 @@ export default createRouter({
 				displayNameCK: zSymEncrypted,
 			}),
 		)
-		.mutation<Fallible<void>>(async ({ ctx, input }) => {
+		.mutation<void>(async ({ ctx, input }) => {
 			const request = await ctx.db.individualLv1BCorrespondenceRequest.findUnique({
 				where: {
 					correspondenceInitID: input.correspondenceInitID,
@@ -100,7 +101,7 @@ export default createRouter({
 			})
 
 			if (!request) {
-				return failed('Provided correspondence init. ID was not found')
+				throw new TRPCError({ code: 'NOT_FOUND', message: 'Provided correspondence init. ID was not found' })
 			}
 
 			await ctx.db.individualLv2BCorrespondenceRequest.create({
@@ -115,7 +116,5 @@ export default createRouter({
 					userDisplayNameCKIV: input.displayNameCK.iv,
 				},
 			})
-
-			return success(void 0)
 		}),
 })

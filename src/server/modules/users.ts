@@ -1,8 +1,8 @@
 import { createRouter } from '../router'
 import { z } from 'zod'
 import { authProcedure, publicProcedure } from './auth'
-import { failed, Fallible, success } from '../types'
 import { generateRandomUUID } from '../../common/crypto'
+import { TRPCError } from '@trpc/server'
 
 export default createRouter({
 	// Register as a new user
@@ -14,7 +14,7 @@ export default createRouter({
 				masterKeyPK: z.string(),
 			}),
 		)
-		.mutation(async ({ input, ctx: { db } }): Promise<Fallible<void>> => {
+		.mutation(async ({ input, ctx: { db } }) => {
 			const existing = await db.user.count({
 				where: {
 					usernameHash: input.usernameHash,
@@ -22,7 +22,7 @@ export default createRouter({
 			})
 
 			if (existing > 0) {
-				return failed('This username is already taken')
+				throw new TRPCError({ code: 'CONFLICT', message: 'This username is already taken' })
 			}
 
 			await db.user.create({
@@ -32,8 +32,6 @@ export default createRouter({
 					masterKeyPK: input.masterKeyPK,
 				},
 			})
-
-			return success(void 0)
 		}),
 
 	// Create a session
@@ -44,7 +42,7 @@ export default createRouter({
 				passwordProof: z.string(),
 			}),
 		)
-		.mutation(async ({ input, ctx }): Promise<Fallible<string>> => {
+		.mutation<string>(async ({ input, ctx }) => {
 			const user = await ctx.db.user.findUnique({
 				where: {
 					usernameHash: input.usernameHash,
@@ -52,11 +50,11 @@ export default createRouter({
 			})
 
 			if (!user) {
-				return failed('Provided user was not found')
+				throw new TRPCError({ code: 'NOT_FOUND', message: 'Provided user was not found' })
 			}
 
 			if (user.passwordProof !== input.passwordProof) {
-				return failed('Invalid password proof provided')
+				throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid password proof provided' })
 			}
 
 			const session = await ctx.db.session.create({
@@ -66,17 +64,15 @@ export default createRouter({
 				},
 			})
 
-			return success(session.id)
+			return session.id
 		}),
 
 	// Destroy current session
-	logout: authProcedure.mutation(async ({ ctx }): Promise<Fallible<void>> => {
+	logout: authProcedure.mutation<void>(async ({ ctx }) => {
 		await ctx.db.session.delete({
 			where: {
 				id: ctx.session.id,
 			},
 		})
-
-		return success(void 0)
 	}),
 })
