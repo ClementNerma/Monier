@@ -4,7 +4,7 @@ import Layout from "../Layout.astro";
 import { isLoggedIn } from "../server/utils/auth";
 
 if (!(await isLoggedIn(Astro))) {
-	return Astro.redirect("/");
+	return Astro.redirect("/login");
 }
 ---
 
