@@ -1,7 +1,7 @@
 import { createSignal } from 'solid-js'
 import { deserializeBuffer, serializeBuffer } from '../../common/base64'
 import { decryptSym, deriveKeyFromPassword, encryptSym, hash, importSymKey, parseJWK } from '../../common/crypto'
-import { bufferToText } from '../../common/utils'
+import { bufferToText, textToBuffer, expectOk } from '../../common/utils'
 import { globalAccessToken, globalMasterKey } from '../../state'
 import { trpc } from '../../trpc-client'
 
@@ -10,17 +10,20 @@ export const LoginForm = () => {
 	const [password, setPassword] = createSignal('')
 
 	async function login() {
-		const usernameHash = await hash(username())
+		const usernameHash = await hash(expectOk(textToBuffer(username())))
 
 		const { passwordProofPlainText, passwordProofPKIV, passwordSalt } = await trpc.users.getLoginInformations.query({
 			usernameHash,
 		})
 
-		const passwordKey = await deriveKeyFromPassword(password(), deserializeBuffer(passwordSalt))
+		const passwordKey = await deriveKeyFromPassword(
+			expectOk(textToBuffer(password())),
+			expectOk(deserializeBuffer(passwordSalt)),
+		)
 		const passwordProofPK = await encryptSym(
-			deserializeBuffer(passwordProofPlainText),
+			expectOk(deserializeBuffer(passwordProofPlainText)),
 			passwordKey,
-			deserializeBuffer(passwordProofPKIV),
+			expectOk(deserializeBuffer(passwordProofPKIV)),
 		)
 
 		const {
@@ -32,12 +35,12 @@ export const LoginForm = () => {
 		})
 
 		const decryptedMasterKey = await decryptSym(
-			deserializeBuffer(masterKeyPK),
+			expectOk(deserializeBuffer(masterKeyPK)),
 			passwordKey,
-			deserializeBuffer(masterKeyPKIV),
+			expectOk(deserializeBuffer(masterKeyPKIV)),
 		)
 
-		const masterKey = await importSymKey(parseJWK(bufferToText(decryptedMasterKey)), true)
+		const masterKey = await importSymKey(parseJWK(expectOk(bufferToText(expectOk(decryptedMasterKey)))), true)
 
 		globalAccessToken.set(accessToken)
 		globalMasterKey.set(Promise.resolve(masterKey))

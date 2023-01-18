@@ -1,6 +1,7 @@
 import { createSignal, onCleanup, onMount } from 'solid-js'
 import { deserializeBuffer } from '../../common/base64'
 import { decryptSym } from '../../common/crypto'
+import { bufferToText, mapUnion } from '../../common/utils'
 import { globalMasterKey } from '../../state'
 
 export type DecryptProps = {
@@ -9,27 +10,73 @@ export type DecryptProps = {
 	iv: string
 }
 
+type DecryptionStatus =
+	| 'componentLoading'
+	| 'noMasterKey'
+	| 'invalidDataBuffer'
+	| 'invalidIvBuffer'
+	| 'decryptionFailed'
+	| 'textDecodingFailed'
+	| 'success'
+
 export const Decrypt = ({ data, iv }: DecryptProps) => {
-	const [decrypted, setDecrypted] = createSignal<string | null | false>(null)
+	const [status, setStatus] = createSignal<[DecryptionStatus, string | null]>(['componentLoading', null])
 	const [removeListener, setRemoveListener] = createSignal<{ remove(): void } | null>(null)
 
 	onMount(() =>
 		setRemoveListener({
 			remove: globalMasterKey.subscribe(async (masterKey) => {
 				if (masterKey === null) {
-					setDecrypted(false)
+					setStatus(['noMasterKey', null])
 					return
 				}
 
-				const decrypted = await decryptSym(deserializeBuffer(data), await masterKey, deserializeBuffer(iv))
+				const dataBuffer = deserializeBuffer(data)
 
-				const decoder = new TextDecoder()
-				setDecrypted(decoder.decode(decrypted))
+				if (dataBuffer instanceof Error) {
+					setStatus(['invalidDataBuffer', null])
+					return
+				}
+
+				const ivBuffer = deserializeBuffer(iv)
+
+				if (ivBuffer instanceof Error) {
+					setStatus(['invalidIvBuffer', null])
+					return
+				}
+
+				const decrypted = await decryptSym(dataBuffer, await masterKey, ivBuffer)
+
+				if (decrypted instanceof Error) {
+					setStatus(['decryptionFailed', null])
+					return
+				}
+
+				const decoded = bufferToText(decrypted)
+
+				if (decoded instanceof Error) {
+					setStatus(['textDecodingFailed', null])
+					return
+				}
+
+				setStatus(['success', decoded])
 			}),
 		}),
 	)
 
 	onCleanup(() => removeListener()?.remove())
 
-	return <>{decrypted() === false ? '<unable to decrypt>' : decrypted() === null ? '<loading>' : decrypted()}</>
+	return (
+		<>
+			{mapUnion(status()[0])({
+				componentLoading: <em>Loading...</em>,
+				noMasterKey: <em>Master key is missing!</em>,
+				invalidDataBuffer: <em>Data buffer is invalid</em>,
+				invalidIvBuffer: <em>IV buffer is invalid</em>,
+				decryptionFailed: <em>Decryption failed</em>,
+				textDecodingFailed: <em>Text decoding failed</em>,
+				success: status()[1],
+			})}
+		</>
+	)
 }

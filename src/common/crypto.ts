@@ -1,6 +1,6 @@
 import type { SymEncrypted } from '../server/types'
 import { serializeBuffer } from './base64'
-import { textToBuffer } from './utils'
+import { fallible } from './utils'
 
 const crypto = globalThis.crypto
 
@@ -30,14 +30,14 @@ export function generateSalt(): Uint8Array {
 	return generateRandomBuffer(CONSTANTS.saltBytesLength)
 }
 
-export async function hash(data: string): Promise<string> {
-	const digest = await crypto.subtle.digest(CONSTANTS.hashAlgorithm, textToBuffer(data))
+export async function hash(data: Uint8Array): Promise<string> {
+	const digest = await crypto.subtle.digest(CONSTANTS.hashAlgorithm, data)
 
 	return serializeBuffer(new Uint8Array(digest))
 }
 
-export async function deriveKeyFromPassword(password: string, salt: Uint8Array): Promise<CryptoKey> {
-	const baseKey = await crypto.subtle.importKey('raw', textToBuffer(password), 'PBKDF2', false, ['deriveKey'])
+export async function deriveKeyFromPassword(password: Uint8Array, salt: Uint8Array): Promise<CryptoKey> {
+	const baseKey = await crypto.subtle.importKey('raw', password, 'PBKDF2', false, ['deriveKey'])
 
 	return crypto.subtle.deriveKey(
 		{
@@ -73,21 +73,23 @@ export async function encryptSym(data: Uint8Array, secretKey: CryptoKey, iv: Uin
 	)
 }
 
-export async function decryptSym(encrypted: Uint8Array, secretKey: CryptoKey, iv: Uint8Array): Promise<Uint8Array> {
-	try {
-		const decrypted = await crypto.subtle.decrypt(
+export async function decryptSym(
+	encrypted: Uint8Array,
+	secretKey: CryptoKey,
+	iv: Uint8Array,
+): Promise<Uint8Array | Error> {
+	const buff = await fallible(() =>
+		crypto.subtle.decrypt(
 			{
 				name: CONSTANTS.symmetricalEncryptionAlgorithm,
 				iv,
 			},
 			secretKey,
 			encrypted,
-		)
+		),
+	)
 
-		return new Uint8Array(decrypted)
-	} catch (e: unknown) {
-		throw new Error(`Failed to perform symmetrical decryption: ${e instanceof Error ? e.message : '<unknown error>'}`)
-	}
+	return buff instanceof Error ? buff : new Uint8Array(buff)
 }
 
 export async function encryptSymForTRPC(data: Uint8Array, secretKey: CryptoKey): Promise<SymEncrypted> {

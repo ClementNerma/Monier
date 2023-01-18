@@ -29,13 +29,13 @@ export function serializeBuffer(bytes: Uint8Array): string {
 	return `${CONSTANTS.bufferSerialization.prefix}${finalStr}${CONSTANTS.bufferSerialization.suffix}`
 }
 
-export function deserializeBuffer(serialized: string): Uint8Array {
+export function deserializeBuffer(serialized: string): Uint8Array | Error {
 	if (!serialized.startsWith(CONSTANTS.bufferSerialization.prefix)) {
-		throw new Error(`Provided serialized content does not contain the expected prefix: ${serialized}`)
+		return new Error(`Provided serialized content does not contain the expected prefix: ${serialized}`)
 	}
 
 	if (!serialized.endsWith(CONSTANTS.bufferSerialization.suffix)) {
-		throw new Error(`Provided serialized content does not contain the expected suffix: ${serialized}`)
+		return new Error(`Provided serialized content does not contain the expected suffix: ${serialized}`)
 	}
 
 	const stripped = serialized.substring(

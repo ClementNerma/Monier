@@ -9,7 +9,7 @@ import {
 	generateSymmetricKey,
 	hash,
 } from '../../common/crypto'
-import { textToBuffer } from '../../common/utils'
+import { expectOk, textToBuffer } from '../../common/utils'
 import { trpc } from '../../trpc-client'
 
 export const RegisterForm = () => {
@@ -22,10 +22,10 @@ export const RegisterForm = () => {
 	async function register() {
 		setResult('Loading...')
 
-		const usernameHash = await hash(username())
+		const usernameHash = await hash(expectOk(textToBuffer(username())))
 
 		const passwordSalt = generateSalt()
-		const passwordKey = await deriveKeyFromPassword(password(), passwordSalt)
+		const passwordKey = await deriveKeyFromPassword(expectOk(textToBuffer(password())), passwordSalt)
 
 		const passwordProofPlainText = generateRandomBuffer(32)
 
@@ -36,8 +36,8 @@ export const RegisterForm = () => {
 			passwordSalt: serializeBuffer(passwordSalt),
 			passwordProofPlainText: serializeBuffer(passwordProofPlainText),
 			passwordProofPK: await encryptSymForTRPC(passwordProofPlainText, passwordKey),
-			masterKeyPK: await encryptSymForTRPC(textToBuffer(await exportKey(masterKey)), passwordKey),
-			displayNameMK: await encryptSymForTRPC(textToBuffer(displayName()), masterKey),
+			masterKeyPK: await encryptSymForTRPC(expectOk(textToBuffer(await exportKey(masterKey))), passwordKey),
+			displayNameMK: await encryptSymForTRPC(expectOk(textToBuffer(displayName())), masterKey),
 		})
 
 		location.pathname = '/login'
