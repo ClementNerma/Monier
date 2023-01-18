@@ -40,6 +40,8 @@ export const LoginForm = () => {
 
 		globalAccessToken.set(accessToken)
 		globalMasterKey.set(masterKey)
+
+		location.pathname = '/'
 	}
 
 	return (
