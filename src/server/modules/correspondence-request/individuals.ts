@@ -240,7 +240,7 @@ export default createRouter({
 					},
 				})
 
-				await db.correspondence.create({
+				await db.correspondent.create({
 					data: {
 						forUserId: ctx.viewer.id,
 
@@ -294,7 +294,7 @@ export default createRouter({
 						id: base.into.id,
 					},
 				}),
-				ctx.db.correspondence.create({
+				ctx.db.correspondent.create({
 					data: {
 						forUserId: base.forUserId,
 

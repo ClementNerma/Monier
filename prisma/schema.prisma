@@ -26,8 +26,8 @@ model User {
 
   sessions Session[]
 
-  correspondences Correspondence[]
-  exchanges       Exchange[]
+  correspondents Correspondent[]
+  exchanges      Exchange[]
 
   messages      Message[]
   notifications Notification[]
@@ -113,7 +113,7 @@ model IndividualLv3ACorrespondenceRequest {
   userDisplayNameCKIV String
 }
 
-model Correspondence {
+model Correspondent {
   id String @id @default(uuid())
 
   forUser   User   @relation(fields: [forUserId], references: [id], onDelete: Cascade)
@@ -139,8 +139,8 @@ model Exchange {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
 
-  correspondence   Correspondence @relation(fields: [correspondenceId], references: [id], onDelete: Cascade)
-  correspondenceId String
+  correspondent   Correspondent @relation(fields: [correspondentId], references: [id], onDelete: Cascade)
+  correspondentId String
 }
 
 model Message {

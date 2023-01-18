@@ -66,7 +66,7 @@ export default createRouter({
 				displayNameCK: zSymEncrypted,
 			}),
 		)
-		.mutation<{ correspondenceId: string }>(async ({ ctx, input }) => {
+		.mutation<{ correspondentId: string }>(async ({ ctx, input }) => {
 			const request = await ctx.db.serviceCorrespondenceRequest.findUnique({
 				where: pick(input, ['correspondenceRequestId']),
 			})
@@ -82,7 +82,7 @@ export default createRouter({
 				})
 			}
 
-			const correspondence = await ctx.db.correspondence.create({
+			const correspondent = await ctx.db.correspondent.create({
 				data: {
 					forUserId: ctx.viewer.id,
 
@@ -99,7 +99,7 @@ export default createRouter({
 			})
 
 			return {
-				correspondenceId: correspondence.id,
+				correspondentId: correspondent.id,
 			}
 		}),
 })
