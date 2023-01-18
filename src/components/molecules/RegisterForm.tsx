@@ -17,11 +17,7 @@ export const RegisterForm = () => {
 	const [displayName, setDisplayName] = createSignal('')
 	const [password, setPassword] = createSignal('')
 
-	const [result, setResult] = createSignal(<></>)
-
 	async function register() {
-		setResult('Loading...')
-
 		const usernameHash = await hash(expectOk(textToBuffer(username())))
 
 		const passwordSalt = generateSalt()
@@ -45,8 +41,6 @@ export const RegisterForm = () => {
 
 	return (
 		<div>
-			<p>{result()}</p>
-
 			<input type="text" placeholder="Username" required onChange={(e) => setUsername(e.currentTarget.value)} />
 			<input type="text" placeholder="Display name" required onChange={(e) => setDisplayName(e.currentTarget.value)} />
 			<input type="password" placeholder="Password" required onChange={(e) => setPassword(e.currentTarget.value)} />
