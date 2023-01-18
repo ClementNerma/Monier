@@ -10,21 +10,35 @@ datasource db {
 model User {
   id String @id @default(uuid())
 
-  usernameHash  String @unique
-  passwordProof String
-  masterKeyPK   String
+  usernameHash String @unique
 
-  sessions                             Session[]
+  passwordSalt String
+
+  passwordProofPlainText String
+  passwordProofPK        String
+  passwordProofPKIV      String
+
+  masterKeyPK   String
+  masterKeyPKIV String
+
+  displayNameMK   String
+  displayNameMKIV String
+
+  sessions Session[]
+
+  correspondences Correspondence[]
+  exchanges       Exchange[]
+
+  messages      Message[]
+  notifications Notification[]
+
+  files File[]
+
   correspondenceRequests               ServiceCorrespondenceRequest[]
   individualLv1BCorrespondenceRequests IndividualLv1BCorrespondenceRequest[]
   individualLv2BCorrespondenceRequests IndividualLv2BCorrespondenceRequest[]
   individualLv2ACorrespondenceRequests IndividualLv2ACorrespondenceRequest[]
   individualLv3ACorrespondenceRequests IndividualLv3ACorrespondenceRequest[]
-  correspondences                      Correspondence[]
-  exchanges                            Exchange[]
-  messages                             Message[]
-  notifications                        Notification[]
-  files                                File[]
 }
 
 model ServiceCorrespondenceRequest {

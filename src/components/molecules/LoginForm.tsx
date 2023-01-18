@@ -1,35 +1,50 @@
 import { createSignal } from 'solid-js'
-import { accessToken } from '../../state'
+import {
+	decryptSym,
+	deriveKeyFromPassword,
+	deserializeBuffer,
+	encryptSym,
+	hash,
+	serializeBuffer,
+} from '../../common/crypto'
+import { globalAccessToken, globalMasterKey } from '../../state'
 import { trpc } from '../../trpc-client'
 
 export const LoginForm = () => {
-	const [email, setEmail] = createSignal('')
+	const [username, setUsername] = createSignal('')
 	const [password, setPassword] = createSignal('')
 
-	const [result, setResult] = createSignal<string | null>(null)
-
 	async function login() {
-		setResult('Loading...')
+		const usernameHash = await hash(username())
 
-		const res = await trpc.users.login.mutate({
-			email: email(),
-			password: password(),
+		const { passwordProofPlainText, passwordProofPKIV, passwordSalt } = await trpc.users.getLoginInformations.query({
+			usernameHash,
 		})
 
-		if (!res.ok) {
-			setResult(`Error: ${res.reason}`)
-		} else {
-			accessToken.set(res.data)
+		const passwordKey = await deriveKeyFromPassword(password(), deserializeBuffer(passwordSalt))
+		const passwordProofPK = await encryptSym(
+			deserializeBuffer(passwordProofPlainText),
+			passwordKey,
+			deserializeBuffer(passwordProofPKIV),
+		)
 
-			setResult('Success!')
-		}
+		const {
+			accessToken,
+			user: { masterKeyPK, masterKeyPKIV },
+		} = await trpc.users.login.mutate({
+			usernameHash,
+			passwordProofPK: serializeBuffer(passwordProofPK),
+		})
+
+		const masterKey = await decryptSym(deserializeBuffer(masterKeyPK), passwordKey, deserializeBuffer(masterKeyPKIV))
+
+		globalAccessToken.set(accessToken)
+		globalMasterKey.set(masterKey)
 	}
 
 	return (
 		<div>
-			<p>{result()}</p>
-
-			<input type="email" placeholder="E-mail" required onChange={(e) => setEmail(e.currentTarget.value)} />
+			<input type="text" placeholder="Username" required onChange={(e) => setUsername(e.currentTarget.value)} />
 			<input type="password" placeholder="Password" required onChange={(e) => setPassword(e.currentTarget.value)} />
 
 			<input type="submit" value="Submit" onClick={login} />

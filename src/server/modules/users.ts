@@ -1,8 +1,10 @@
 import { createRouter } from '../router'
 import { z } from 'zod'
 import { authProcedure, publicProcedure } from './auth'
-import { generateRandomUUID } from '../../common/crypto'
 import { TRPCError } from '@trpc/server'
+import { zSymEncrypted } from '../types'
+import { pick } from '../../common/utils'
+import { generateRandomUUID } from '../../common/crypto'
 
 export default createRouter({
 	// Register as a new user
@@ -10,11 +12,14 @@ export default createRouter({
 		.input(
 			z.object({
 				usernameHash: z.string(),
-				passwordProof: z.string(),
-				masterKeyPK: z.string(),
+				passwordSalt: z.string(),
+				passwordProofPlainText: z.string(),
+				passwordProofPK: zSymEncrypted,
+				masterKeyPK: zSymEncrypted,
+				displayNameMK: zSymEncrypted,
 			}),
 		)
-		.mutation(async ({ input, ctx: { db } }) => {
+		.mutation<void>(async ({ input, ctx: { db } }) => {
 			const existing = await db.user.count({
 				where: {
 					usernameHash: input.usernameHash,
@@ -28,21 +33,26 @@ export default createRouter({
 			await db.user.create({
 				data: {
 					usernameHash: input.usernameHash,
-					passwordProof: input.passwordProof,
-					masterKeyPK: input.masterKeyPK,
+					passwordSalt: input.passwordSalt,
+					passwordProofPlainText: input.passwordProofPlainText,
+					passwordProofPK: input.passwordProofPK.content,
+					passwordProofPKIV: input.passwordProofPK.iv,
+					masterKeyPK: input.masterKeyPK.content,
+					masterKeyPKIV: input.masterKeyPK.iv,
+					displayNameMK: input.displayNameMK.content,
+					displayNameMKIV: input.displayNameMK.iv,
 				},
 			})
 		}),
 
-	// Create a session
-	login: publicProcedure
+	// Get login informations to actually login
+	getLoginInformations: publicProcedure
 		.input(
 			z.object({
 				usernameHash: z.string(),
-				passwordProof: z.string(),
 			}),
 		)
-		.mutation<string>(async ({ input, ctx }) => {
+		.query(async ({ ctx, input }) => {
 			const user = await ctx.db.user.findUnique({
 				where: {
 					usernameHash: input.usernameHash,
@@ -50,21 +60,47 @@ export default createRouter({
 			})
 
 			if (!user) {
-				throw new TRPCError({ code: 'NOT_FOUND', message: 'Provided user was not found' })
+				throw new TRPCError({ code: 'NOT_FOUND', message: 'The provided username was not found' })
 			}
 
-			if (user.passwordProof !== input.passwordProof) {
-				throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid password proof provided' })
-			}
+			return pick(user, ['passwordSalt', 'passwordProofPlainText', 'passwordProofPKIV'])
+		}),
 
-			const session = await ctx.db.session.create({
-				data: {
-					accessToken: generateRandomUUID(),
-					userId: user.id,
+	login: publicProcedure
+		.input(
+			z.object({
+				usernameHash: z.string(),
+				passwordProofPK: z.string(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const user = await ctx.db.user.findUnique({
+				where: {
+					usernameHash: input.usernameHash,
 				},
 			})
 
-			return session.id
+			if (!user) {
+				throw new TRPCError({ code: 'NOT_FOUND', message: 'The provided username was not found' })
+			}
+
+			if (input.passwordProofPK !== user.passwordProofPK) {
+				throw new TRPCError({ code: 'FORBIDDEN', message: 'The provided password (proof) is invalid' })
+			}
+
+			const accessToken = generateRandomUUID()
+
+			await ctx.db.session.create({
+				data: {
+					userId: user.id,
+					accessToken,
+				},
+			})
+
+			return {
+				user: pick(user, ['masterKeyPK', 'masterKeyPKIV']),
+				accessToken,
+			}
 		}),
 
 	// Destroy current session

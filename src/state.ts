@@ -1,24 +1,26 @@
 import { atom } from 'nanostores'
-import type { COOKIE_NAMES } from './common/constants'
 import { generateCookieEntry, getCookie } from './common/cookies'
+import { deserializeBuffer, serializeBuffer } from './common/crypto'
+import { map } from './common/utils'
 
-type LocalStorageData = typeof COOKIE_NAMES[keyof typeof COOKIE_NAMES]
-
-const readLocal = (data: LocalStorageData): string | null => getCookie(document.cookie, data) ?? null
-const writeLocal = (data: LocalStorageData, value: string) => {
-	document.cookie = generateCookieEntry(data, value)
-}
-const eraseLocal = (data: LocalStorageData) => {
-	document.cookie = generateCookieEntry(data, '')
+const COOKIE_NAMES = {
+	accessToken: 'accessToken',
 }
 
-const localBackedStateItem = (name: LocalStorageData) => {
-	const item = atom(readLocal(name))
-
-	// Sync. writes to local storage
-	item.listen((value) => (value === null ? eraseLocal(name) : writeLocal(name, value)))
-
-	return item
+const LOCAL_STORE_ITEMS = {
+	masterKey: 'masterKey',
 }
 
-export const accessToken = localBackedStateItem('accessToken')
+export const globalAccessToken = atom(getCookie(document.cookie, COOKIE_NAMES.accessToken))
+
+globalAccessToken.listen((token) => {
+	document.cookie = generateCookieEntry(COOKIE_NAMES.accessToken, token ?? '')
+})
+
+export const globalMasterKey = atom(map(localStorage.getItem(LOCAL_STORE_ITEMS.masterKey), deserializeBuffer))
+
+globalMasterKey.listen((masterKey) =>
+	masterKey !== null
+		? localStorage.setItem(LOCAL_STORE_ITEMS.masterKey, serializeBuffer(masterKey))
+		: localStorage.removeItem(LOCAL_STORE_ITEMS.masterKey),
+)
