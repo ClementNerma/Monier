@@ -8,3 +8,13 @@ export function pick<O extends object, P extends keyof O>(obj: O, props: P[]): P
 	// @ts-ignore
 	return Object.fromEntries(Object.entries(obj).filter(([prop]) => props.includes(prop)))
 }
+
+export function textToBuffer(input: string): Uint8Array {
+	const encoder = new TextEncoder()
+	return encoder.encode(input)
+}
+
+export function bufferToText(input: Uint8Array): string {
+	const decoder = new TextDecoder()
+	return decoder.decode(input)
+}

@@ -1,0 +1,12 @@
+{
+    "[astro]": {
+        "editor.defaultFormatter": "astro-build.astro-vscode"
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "rome.rome"
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "rome.rome"
+    },
+    // "typescript.tsserver.experimental.enableProjectDiagnostics": true
+}

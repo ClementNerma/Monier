@@ -1,7 +1,7 @@
 import type { Session, User } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 import type { AstroCookies } from 'astro/dist/core/cookies'
-import { COOKIE_NAMES } from '../../common/constants'
+import { CONSTANTS } from '../../common/constants'
 import { getCookie } from '../../common/cookies'
 import { map, pick } from '../../common/utils'
 import type { Context } from '../context'
@@ -11,13 +11,13 @@ export async function getSession(
 	cookies: Context['cookies'] | AstroCookies,
 	db: Context['db'],
 ): Promise<(Session & { user: User }) | null> {
-	const authToken = map(cookies, (cookies) =>
+	const accessToken = map(cookies, (cookies) =>
 		typeof cookies === 'string'
-			? getCookie(cookies, COOKIE_NAMES.accessToken)
-			: cookies.get(COOKIE_NAMES.accessToken)?.value ?? null,
+			? getCookie(cookies, CONSTANTS.cookieNames.accessToken)
+			: cookies.get(CONSTANTS.cookieNames.accessToken)?.value ?? null,
 	)
 
-	if (authToken === null) {
+	if (accessToken === null) {
 		return null
 	}
 
@@ -26,7 +26,7 @@ export async function getSession(
 			user: true,
 		},
 		where: {
-			id: authToken,
+			accessToken,
 		},
 	})
 

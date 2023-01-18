@@ -1,11 +1,18 @@
 ---
+import { Decrypt } from "../components/atom/Decrypt";
 import { AuthStatus } from "../components/molecules/AuthStatus";
 import Layout from "../Layout.astro";
-import { isLoggedIn } from "../server/utils/auth";
+import { serverApp } from "../server";
 
-if (!(await isLoggedIn(Astro))) {
+const app = await serverApp(Astro);
+const viewer = await app.server.viewer();
+
+if (!viewer) {
 	return Astro.redirect("/login");
 }
+
+// const pendingRequests =
+// 	await app.correspondenceRequest.individuals.pendingFullyFilledRequests();
 ---
 
 <Layout title="Home">
@@ -13,5 +20,11 @@ if (!(await isLoggedIn(Astro))) {
 		<h2>Home</h2>
 
 		<AuthStatus client:only />
+
+		<Decrypt
+			data={viewer.displayNameMK}
+			iv={viewer.displayNameMKIV}
+			client:only
+		/>
 	</main>
 </Layout>

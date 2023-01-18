@@ -1,12 +1,7 @@
 import { createSignal } from 'solid-js'
-import {
-	decryptSym,
-	deriveKeyFromPassword,
-	deserializeBuffer,
-	encryptSym,
-	hash,
-	serializeBuffer,
-} from '../../common/crypto'
+import { deserializeBuffer, serializeBuffer } from '../../common/base64'
+import { decryptSym, deriveKeyFromPassword, encryptSym, hash, importSymKey, parseJWK } from '../../common/crypto'
+import { bufferToText } from '../../common/utils'
 import { globalAccessToken, globalMasterKey } from '../../state'
 import { trpc } from '../../trpc-client'
 
@@ -36,12 +31,18 @@ export const LoginForm = () => {
 			passwordProofPK: serializeBuffer(passwordProofPK),
 		})
 
-		const masterKey = await decryptSym(deserializeBuffer(masterKeyPK), passwordKey, deserializeBuffer(masterKeyPKIV))
+		const decryptedMasterKey = await decryptSym(
+			deserializeBuffer(masterKeyPK),
+			passwordKey,
+			deserializeBuffer(masterKeyPKIV),
+		)
+
+		const masterKey = await importSymKey(parseJWK(bufferToText(decryptedMasterKey)), true)
 
 		globalAccessToken.set(accessToken)
-		globalMasterKey.set(masterKey)
+		globalMasterKey.set(Promise.resolve(masterKey))
 
-		location.pathname = '/'
+		// location.pathname = '/'
 	}
 
 	return (

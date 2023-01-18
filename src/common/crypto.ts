@@ -1,5 +1,6 @@
 import type { SymEncrypted } from '../server/types'
-import { isBrowser } from './utils'
+import { serializeBuffer } from './base64'
+import { textToBuffer } from './utils'
 
 const crypto = globalThis.crypto
 
@@ -15,8 +16,6 @@ const CONSTANTS = Object.freeze({
 	voidSymmetricalIV: new Uint8Array(16).fill(0),
 	saltBytesLength: 16,
 	pepperBytesLength: 16,
-	serializedBufferPrefix: 'notaserbufbeg:',
-	serializedBufferSuffix: ':notaserbufend.',
 })
 
 export function generateRandomUUID(): string {
@@ -85,7 +84,7 @@ export async function decryptSym(encrypted: Uint8Array, secretKey: CryptoKey, iv
 			encrypted,
 		)
 
-		return new Uint8Array(decrypted)g0
+		return new Uint8Array(decrypted)
 	} catch (e: unknown) {
 		throw new Error(`Failed to perform symmetrical decryption: ${e instanceof Error ? e.message : '<unknown error>'}`)
 	}
@@ -98,51 +97,22 @@ export async function encryptSymForTRPC(data: Uint8Array, secretKey: CryptoKey):
 	return { content: serializeBuffer(content), iv: serializeBuffer(iv) }
 }
 
+export function parseJWK(encoded: string): JsonWebKey {
+	// TODO: parse with Zod
+	return JSON.parse(encoded)
+}
+
+export async function importSymKey(key: JsonWebKey, exportable = false): Promise<CryptoKey> {
+	return await crypto.subtle.importKey('jwk', key, { name: CONSTANTS.symmetricalEncryptionAlgorithm }, exportable, [
+		'encrypt',
+		'decrypt',
+	])
+}
+
 export async function exportKey(key: CryptoKey): Promise<string> {
 	return JSON.stringify(await crypto.subtle.exportKey('jwk', key))
 }
 
 export function generateIV(): Uint8Array {
 	return generateRandomBuffer(CONSTANTS.symmetricalEncryptionAlgorithmIVLength)
-}
-
-export function textToBuffer(input: string): Uint8Array {
-	const encoder = new TextEncoder()
-	return encoder.encode(input)
-}
-
-export function serializeBuffer(buffer: Uint8Array): string {
-	const serialized = !isBrowser
-		? Buffer.from(buffer).toString('base64')
-		: btoa(
-				Array(buffer.length)
-					.fill('')
-					.map((int) => String.fromCharCode(int))
-					.join(''),
-		  )
-
-	return `${CONSTANTS.serializedBufferPrefix}${serialized}${CONSTANTS.serializedBufferSuffix}`
-}
-
-export function deserializeBuffer(serialized: string): Uint8Array {
-	if (!serialized.startsWith(CONSTANTS.serializedBufferPrefix)) {
-		throw new Error('Provided serialized content does not contain the expected prefix')
-	}
-
-	if (!serialized.endsWith(CONSTANTS.serializedBufferPrefix)) {
-		throw new Error('Provided serialized content does not contain the expected suffix')
-	}
-
-	const stripped = serialized.substring(
-		CONSTANTS.serializedBufferPrefix.length,
-		serialized.length - CONSTANTS.serializedBufferSuffix.length,
-	)
-
-	return !isBrowser
-		? Buffer.from(stripped, 'base64')
-		: new Uint8Array(
-				atob(stripped)
-					.split('')
-					.map((char) => char.charCodeAt(0)),
-		  )
 }

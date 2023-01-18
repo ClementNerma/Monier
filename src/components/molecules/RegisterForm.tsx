@@ -1,4 +1,5 @@
 import { createSignal } from 'solid-js'
+import { serializeBuffer } from '../../common/base64'
 import {
 	deriveKeyFromPassword,
 	encryptSymForTRPC,
@@ -7,9 +8,8 @@ import {
 	generateSalt,
 	generateSymmetricKey,
 	hash,
-	serializeBuffer,
-	textToBuffer,
 } from '../../common/crypto'
+import { textToBuffer } from '../../common/utils'
 import { trpc } from '../../trpc-client'
 
 export const RegisterForm = () => {

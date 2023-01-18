@@ -1,26 +1,21 @@
 import { atom } from 'nanostores'
+import { CONSTANTS } from './common/constants'
 import { generateCookieEntry, getCookie } from './common/cookies'
-import { deserializeBuffer, serializeBuffer } from './common/crypto'
+import { exportKey, importSymKey, parseJWK } from './common/crypto'
 import { map } from './common/utils'
 
-const COOKIE_NAMES = {
-	accessToken: 'accessToken',
-}
-
-const LOCAL_STORE_ITEMS = {
-	masterKey: 'masterKey',
-}
-
-export const globalAccessToken = atom(getCookie(document.cookie, COOKIE_NAMES.accessToken))
+export const globalAccessToken = atom(getCookie(document.cookie, CONSTANTS.cookieNames.accessToken))
 
 globalAccessToken.listen((token) => {
-	document.cookie = generateCookieEntry(COOKIE_NAMES.accessToken, token ?? '')
+	document.cookie = generateCookieEntry(CONSTANTS.cookieNames.accessToken, token ?? '')
 })
 
-export const globalMasterKey = atom(map(localStorage.getItem(LOCAL_STORE_ITEMS.masterKey), deserializeBuffer))
+export const globalMasterKey = atom(
+	map(localStorage.getItem(CONSTANTS.localStoreItems.masterKey), (masterKey) => importSymKey(parseJWK(masterKey))),
+)
 
-globalMasterKey.listen((masterKey) =>
+globalMasterKey.listen(async (masterKey) =>
 	masterKey !== null
-		? localStorage.setItem(LOCAL_STORE_ITEMS.masterKey, serializeBuffer(masterKey))
-		: localStorage.removeItem(LOCAL_STORE_ITEMS.masterKey),
+		? localStorage.setItem(CONSTANTS.localStoreItems.masterKey, await exportKey(await masterKey))
+		: localStorage.removeItem(CONSTANTS.localStoreItems.masterKey),
 )
