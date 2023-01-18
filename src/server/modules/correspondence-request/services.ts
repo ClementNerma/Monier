@@ -7,6 +7,7 @@ import { zSymEncrypted, SymEncrypted } from '../../types'
 import { authProcedure } from '../auth'
 
 export default createRouter({
+	// From target (client) to target (server)
 	createCorrespondenceRequest: authProcedure
 		.input(
 			z.object({
@@ -16,7 +17,7 @@ export default createRouter({
 				correspondenceKeyMKIV: z.string(),
 			}),
 		)
-		.mutation(async ({ ctx, input }) => {
+		.mutation<void>(async ({ ctx, input }) => {
 			await ctx.db.serviceCorrespondenceRequest.create({
 				data: {
 					forUserId: ctx.viewer.id,
@@ -26,6 +27,7 @@ export default createRouter({
 			})
 		}),
 
+	// From target (server) to target (client)
 	getCorrespondenceKeyMK: authProcedure
 		.input(
 			z.object({
@@ -56,6 +58,7 @@ export default createRouter({
 			}
 		}),
 
+	// From target (client) to target (server)
 	confirmCorrespondence: authProcedure
 		.input(
 			z.object({
@@ -81,11 +84,17 @@ export default createRouter({
 
 			const correspondence = await ctx.db.correspondence.create({
 				data: {
+					forUserId: ctx.viewer.id,
+
 					accessToken: generateRandomUUID(),
-					displayNameCK: input.displayNameCK.content,
-					displayNameCKIV: input.displayNameCK.iv,
+
 					isService: true,
-					...pick(request, ['correspondenceKeyMK', 'correspondenceKeyMKIV']),
+					isInitiator: false,
+
+					userDisplayNameCK: input.displayNameCK.content,
+					userDisplayNameCKIV: input.displayNameCK.iv,
+					correspondenceKeyMK: request.correspondenceKeyMK,
+					correspondenceKeyMKIV: request.correspondenceKeyMKIV,
 				},
 			})
 
