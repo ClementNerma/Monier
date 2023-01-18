@@ -85,8 +85,6 @@ model IndividualLv2ACorrespondenceRequest {
   correspondenceKeyMKIV String
 
   into IndividualLv3ACorrespondenceRequest?
-
-  tasks TaskRetryFillIndividualCorrespondenceRequestInfos[]
 }
 
 model IndividualLv3ACorrespondenceRequest {
@@ -99,26 +97,6 @@ model IndividualLv3ACorrespondenceRequest {
 
   userDisplayNameCK   String
   userDisplayNameCKIV String
-}
-
-model TaskRetryFillIndividualCorrespondenceRequestInfos {
-  id String @id @default(uuid())
-
-  fromRequest                     IndividualLv2ACorrespondenceRequest @relation(fields: [fromRequestCorrespondenceInitId], references: [correspondenceInitID], onDelete: Cascade)
-  fromRequestCorrespondenceInitId String
-
-  correspondenceKeyCIPK String
-  userDisplayNameCK     String
-  userDisplayNameCKIV   String
-}
-
-model TaskRetryFullyAcceptCorrespondenceRequest {
-  id String @id @default(uuid())
-
-  fromCorrespondence            Correspondence @relation(fields: [fromCorrespondenceAccessToken], references: [accessToken], onDelete: Cascade)
-  fromCorrespondenceAccessToken String
-
-  correspondenceInitId String @unique
 }
 
 model Correspondence {
@@ -140,8 +118,6 @@ model Correspondence {
   userDisplayNameCKIV   String
 
   exchanges Exchange[]
-
-  tasks TaskRetryFullyAcceptCorrespondenceRequest[]
 }
 
 model Exchange {

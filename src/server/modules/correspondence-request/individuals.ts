@@ -74,30 +74,21 @@ export default createRouter({
 			}),
 		)
 		.mutation<void>(async ({ ctx, input }) => {
-			await ctx.db.individualLv2ACorrespondenceRequest.create({
-				data: {
-					forUserId: ctx.viewer.id,
+			await ctx.db.$transaction(async (db) => {
+				await db.individualLv2ACorrespondenceRequest.create({
+					data: {
+						forUserId: ctx.viewer.id,
 
-					correspondenceInitID: input.correspondenceInitID,
-					correspondenceKeyMK: input.correspondenceKeyMK.content,
-					correspondenceKeyMKIV: input.correspondenceKeyMK.iv,
+						correspondenceInitID: input.correspondenceInitID,
+						correspondenceKeyMK: input.correspondenceKeyMK.content,
+						correspondenceKeyMKIV: input.correspondenceKeyMK.iv,
 
-					serverUrl: input.serverUrl,
-				},
-			})
+						serverUrl: input.serverUrl,
+					},
+				})
 
-			// TODO: make request to initiator (server) with the provided arguments
-			//       (method: "fillInfos")
-
-			// In case of fail, store it as a task to retry:
-			await ctx.db.taskRetryFillIndividualCorrespondenceRequestInfos.create({
-				data: {
-					fromRequestCorrespondenceInitId: input.correspondenceInitID,
-					correspondenceKeyCIPK: input.correspondenceKeyCIPK,
-
-					userDisplayNameCK: input.displayNameCK.content,
-					userDisplayNameCKIV: input.displayNameCK.iv,
-				},
+				// TODO: make request to initiator (server) with the provided arguments
+				// In case of failure, the transaction will be aborted
 			})
 		}),
 
@@ -240,13 +231,16 @@ export default createRouter({
 
 			const accessToken = generateRandomUUID()
 
-			await ctx.db.$transaction([
-				ctx.db.individualLv3ACorrespondenceRequest.delete({
+			const into = base.into
+
+			await ctx.db.$transaction(async (db) => {
+				await db.individualLv3ACorrespondenceRequest.delete({
 					where: {
-						id: base.into.id,
+						id: into.id,
 					},
-				}),
-				ctx.db.correspondence.create({
+				})
+
+				await db.correspondence.create({
 					data: {
 						forUserId: ctx.viewer.id,
 
@@ -258,20 +252,14 @@ export default createRouter({
 						correspondenceKeyMK: base.correspondenceKeyMK,
 						correspondenceKeyMKIV: base.correspondenceKeyMKIV,
 
-						userDisplayNameCK: base.into.userDisplayNameCK,
-						userDisplayNameCKIV: base.into.userDisplayNameCKIV,
+						userDisplayNameCK: into.userDisplayNameCK,
+						userDisplayNameCKIV: into.userDisplayNameCKIV,
 					},
-				}),
-				ctx.db.taskRetryFullyAcceptCorrespondenceRequest.create({
-					data: {
-						fromCorrespondenceAccessToken: accessToken,
-						correspondenceInitId: base.correspondenceInitID,
-					},
-				}),
-			])
+				})
 
-			// TODO: contact initiator's server (method: fullyAcceptRequest)
-			// Then destroy the task
+				// TODO: contact initiator's server (method: fullyAcceptRequest)
+				// In case of failure, the whole transaction will be destroyed
+			})
 		}),
 
 	// From target (server) to initiator (server)
