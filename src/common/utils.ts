@@ -9,9 +9,9 @@ export function pick<O extends object, P extends keyof O>(obj: O, props: P[]): P
 	return Object.fromEntries(Object.entries(obj).filter(([prop]) => props.includes(prop)))
 }
 
-export function textToBuffer(input: string): Uint8Array | Error {
+export function textToBuffer(input: string): Uint8Array {
 	const encoder = new TextEncoder()
-	return fallibleSync(() => encoder.encode(input))
+	return encoder.encode(input)
 }
 
 export function bufferToText(input: Uint8Array): string | Error {
@@ -46,4 +46,13 @@ export function expectOk<T>(value: T | Error): T {
 	}
 
 	return value
+}
+
+export async function parallel<O extends { [key: string]: Promise<unknown> }>(obj: O): Promise<{
+	[Key in keyof O]: Awaited<O[Key]>
+}> {
+	const entries = Object.entries(obj)
+	const promises = await Promise.all(entries.map(([_, promise]) => promise))
+	const promised = entries.map(([key, _], i) => [key, promises[i]])
+	return Object.fromEntries(promised)
 }

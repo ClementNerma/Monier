@@ -19,3 +19,15 @@ globalMasterKey.listen(async (masterKey) =>
 		? localStorage.setItem(CONSTANTS.localStoreItems.masterKey, await exportKey(await masterKey))
 		: localStorage.removeItem(CONSTANTS.localStoreItems.masterKey),
 )
+
+export function expectMasterKey(): Promise<CryptoKey> {
+	const masterKey = globalMasterKey.get()
+
+	if (!masterKey) {
+		const msg = 'Error: no master key setup!'
+		alert(msg)
+		throw new Error(msg)
+	}
+
+	return masterKey
+}

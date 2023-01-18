@@ -67,6 +67,19 @@ export async function generateSymmetricKey() {
 	)
 }
 
+export async function generateAsymmetricKeyPair(): Promise<CryptoKeyPair> {
+	return crypto.subtle.generateKey(
+		{
+			name: CONSTANTS.asymmetricalEncryptionAlgorithm,
+			modulusLength: CONSTANTS.asymmetricalEncryptionAlgorithmKeyLength,
+			publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+			hash: CONSTANTS.hashAlgorithm,
+		},
+		true,
+		['encrypt', 'decrypt'],
+	)
+}
+
 export async function encryptSym(data: Uint8Array, secretKey: CryptoKey, iv: Uint8Array): Promise<Uint8Array> {
 	return new Uint8Array(
 		await crypto.subtle.encrypt({ name: CONSTANTS.symmetricalEncryptionAlgorithm, iv }, secretKey, data),
@@ -92,6 +105,20 @@ export async function decryptSym(
 	return buff instanceof Error ? buff : new Uint8Array(buff)
 }
 
+export async function encryptAsym(data: Uint8Array, publicKey: CryptoKey): Promise<Uint8Array> {
+	const encrypted = await crypto.subtle.encrypt(CONSTANTS.asymmetricalEncryptionAlgorithm, publicKey, data)
+
+	return new Uint8Array(encrypted)
+}
+
+export async function decryptAsym(encrypted: Uint8Array, publicKey: CryptoKey): Promise<Uint8Array | Error> {
+	const decrypted = await fallible(() =>
+		crypto.subtle.decrypt(CONSTANTS.asymmetricalEncryptionAlgorithm, publicKey, encrypted),
+	)
+
+	return decrypted instanceof Error ? decrypted : new Uint8Array(decrypted)
+}
+
 export async function encryptSymForTRPC(data: Uint8Array, secretKey: CryptoKey): Promise<SymEncrypted> {
 	const iv = generateIV()
 	const content = await encryptSym(data, secretKey, iv)
@@ -108,6 +135,12 @@ export async function importSymKey(key: JsonWebKey, exportable = false): Promise
 	return await crypto.subtle.importKey('jwk', key, { name: CONSTANTS.symmetricalEncryptionAlgorithm }, exportable, [
 		'encrypt',
 		'decrypt',
+	])
+}
+
+export async function importAsymPublicKey(key: Uint8Array, exportable = false): Promise<CryptoKey> {
+	return await crypto.subtle.importKey('spki', key, { name: CONSTANTS.asymmetricalEncryptionAlgorithm }, exportable, [
+		'encrypt',
 	])
 }
 

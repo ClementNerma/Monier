@@ -1,6 +1,8 @@
 ---
+import { parallel } from "../common/utils";
 import { Decrypt } from "../components/atom/Decrypt";
-import { AuthStatus } from "../components/molecules/AuthStatus";
+import { CorrespondenceCodeGenerator } from "../components/molecules/CorrespondenceCodeGenerator";
+import { CorrespondenceCodeInput } from "../components/molecules/CorrespondenceCodeInput";
 import Layout from "../Layout.astro";
 import { serverApp } from "../server";
 
@@ -11,20 +13,81 @@ if (!viewer) {
 	return Astro.redirect("/login");
 }
 
+const data = await parallel({
+	correspondents: app.correspondents.list(),
+});
+
 // const pendingRequests =
 // 	await app.correspondenceRequest.individuals.pendingFullyFilledRequests();
 ---
 
 <Layout title="Home">
 	<main>
-		<h2>Home</h2>
+		<h2>
+			Hello, <Decrypt
+				data={viewer.displayNameMK}
+				iv={viewer.displayNameMKIV}
+				client:only
+			/>!
+		</h2>
 
-		<AuthStatus client:only />
+		<div class="container">
+			<h3>Correspondents</h3>
 
-		<Decrypt
-			data={viewer.displayNameMK}
-			iv={viewer.displayNameMKIV}
-			client:only
-		/>
+			<table>
+				<thead>
+					<tr>
+						<th>Nom</th>
+						<th>Service ?</th>
+						<th>Initiateur ?</th>
+					</tr>
+				</thead>
+				<tbody>
+					{
+						data.correspondents.map((corr) => (
+							<tr>
+								<td>
+									<Decrypt
+										data={corr.correspondenceKeyMK}
+										iv={corr.correspondenceKeyMKIV}
+										client:only
+									/>
+								</td>
+								<td>{corr.isService ? "Yes" : "No"}</td>
+								<td>{corr.isInitiator ? "Yes" : "No"}</td>
+							</tr>
+						))
+					}
+				</tbody>
+			</table>
+
+			<br />
+
+			<div class="container">
+				<CorrespondenceCodeGenerator client:only />
+			</div>
+
+			<div class="container">
+				<CorrespondenceCodeInput displayNameMK={viewer.displayNameMK} displayNameMKIV={viewer.displayNameMKIV} client:only />
+			</div>
+		</div>
 	</main>
 </Layout>
+
+<style>
+	.container {
+		border: 1px solid black;
+		padding: 1rem;
+	}
+
+	table {
+		border-collapse: collapse;
+		width: 100%;
+	}
+
+	th,
+	td {
+		border: 1px solid black;
+		padding: 1rem;
+	}
+</style>

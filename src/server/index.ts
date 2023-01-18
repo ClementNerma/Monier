@@ -6,12 +6,14 @@ import { createRouter } from './router'
 import auth from './modules/auth'
 import users from './modules/users'
 import correspondenceRequest from './modules/correspondence-request'
+import correspondents from './modules/correspondents'
 import server from './modules/server'
 
 export const appRouter = createRouter({
 	auth,
 	users,
 	correspondenceRequest,
+	correspondents,
 	server,
 })
 

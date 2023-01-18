@@ -16,7 +16,7 @@ export default createRouter({
 				correspondenceInitPublicKey: z.string(),
 			}),
 		)
-		.mutation<string>(async ({ ctx, input }) => {
+		.mutation<{ correspondenceCode: string }>(async ({ ctx, input }) => {
 			// TODO: use a passphrase here
 
 			const correspondenceCode = generateRandomUUID()
@@ -34,7 +34,7 @@ export default createRouter({
 				},
 			})
 
-			return correspondenceCode
+			return { correspondenceCode }
 		}),
 
 	// From target (client) to initiator (server)
