@@ -73,27 +73,35 @@ export default createRouter({
 			}),
 		)
 		.mutation<void>(async ({ ctx, input }) => {
-			await ctx.db.$transaction(async (db) => {
-				await db.individualLv2ACorrespondenceRequest.create({
-					data: {
-						forUserId: ctx.viewer.id,
+			await ctx.db.individualLv2ACorrespondenceRequest.deleteMany({
+				where: { correspondenceInitID: input.correspondenceInitID, fulfilled: false },
+			})
 
-						correspondenceInitID: input.correspondenceInitID,
-						correspondenceKeyMK: input.correspondenceKeyMK.content,
-						correspondenceKeyMKIV: input.correspondenceKeyMK.iv,
+			const { id } = await ctx.db.individualLv2ACorrespondenceRequest.create({
+				data: {
+					forUserId: ctx.viewer.id,
+					fulfilled: false,
 
-						serverUrl: input.serverUrl,
-					},
-				})
-
-				const distantApi = createApiClient(input.serverUrl)
-
-				await distantApi.correspondenceRequest.individuals.fillInfos.mutate({
 					correspondenceInitID: input.correspondenceInitID,
-					correspondenceKeyCIPK: input.correspondenceKeyCIPK,
-					displayNameCK: input.displayNameCK,
-					serverUrl: CONFIG.CURRENT_SERVER_URL,
-				})
+					correspondenceKeyMK: input.correspondenceKeyMK.content,
+					correspondenceKeyMKIV: input.correspondenceKeyMK.iv,
+
+					serverUrl: input.serverUrl,
+				},
+			})
+
+			const distantApi = createApiClient(input.serverUrl)
+
+			await distantApi.correspondenceRequest.individuals.fillInfos.mutate({
+				correspondenceInitID: input.correspondenceInitID,
+				correspondenceKeyCIPK: input.correspondenceKeyCIPK,
+				displayNameCK: input.displayNameCK,
+				serverUrl: CONFIG.CURRENT_SERVER_URL,
+			})
+
+			await ctx.db.individualLv2ACorrespondenceRequest.update({
+				data: { fulfilled: true },
+				where: { id },
 			})
 		}),
 
@@ -188,22 +196,31 @@ export default createRouter({
 
 			const { into } = base
 
-			await ctx.db.$transaction(async (db) => {
-				await db.individualLv3BCorrespondenceRequest.create({
-					data: {
-						fromId: into.id,
-						forUserId: ctx.viewer.id,
-						correspondenceKeyMK: input.correspondenceKeyMK.content,
-						correspondenceKeyMKIV: input.correspondenceKeyMK.iv,
-					},
-				})
+			await ctx.db.individualLv3BCorrespondenceRequest.deleteMany({
+				where: { fromId: into.id, fulfilled: false },
+			})
 
-				const distantApi = createApiClient(into.serverUrl)
+			const { id } = await ctx.db.individualLv3BCorrespondenceRequest.create({
+				data: {
+					fromId: into.id,
+					forUserId: ctx.viewer.id,
+					fulfilled: false,
 
-				await distantApi.correspondenceRequest.individuals.receiveFilledRequestAnswer.mutate({
-					correspondenceInitID: input.correspondenceInitID,
-					userDisplayNameCK: input.userDisplayNameCK,
-				})
+					correspondenceKeyMK: input.correspondenceKeyMK.content,
+					correspondenceKeyMKIV: input.correspondenceKeyMK.iv,
+				},
+			})
+
+			const distantApi = createApiClient(into.serverUrl)
+
+			await distantApi.correspondenceRequest.individuals.receiveFilledRequestAnswer.mutate({
+				correspondenceInitID: input.correspondenceInitID,
+				userDisplayNameCK: input.userDisplayNameCK,
+			})
+
+			await ctx.db.individualLv3BCorrespondenceRequest.update({
+				data: { fulfilled: true },
+				where: { id },
 			})
 		}),
 
@@ -226,16 +243,14 @@ export default createRouter({
 				throw new TRPCError({ code: 'NOT_FOUND', message: 'The provided request was not found' })
 			}
 
-			await ctx.db.$transaction([
-				ctx.db.individualLv3ACorrespondenceRequest.create({
-					data: {
-						forUserId: request.forUserId,
-						fromId: request.id,
-						userDisplayNameCK: input.userDisplayNameCK.content,
-						userDisplayNameCKIV: input.userDisplayNameCK.iv,
-					},
-				}),
-			])
+			await ctx.db.individualLv3ACorrespondenceRequest.create({
+				data: {
+					forUserId: request.forUserId,
+					fromId: request.id,
+					userDisplayNameCK: input.userDisplayNameCK.content,
+					userDisplayNameCKIV: input.userDisplayNameCK.iv,
+				},
+			})
 		}),
 
 	// From target (server) to target (client)
@@ -293,36 +308,34 @@ export default createRouter({
 
 			const into = base.into
 
-			await ctx.db.$transaction(async (db) => {
-				await db.individualLv3ACorrespondenceRequest.delete({
-					where: {
-						id: into.id,
-					},
-				})
+			const distantApi = createApiClient(base.serverUrl)
 
-				await db.correspondent.create({
-					data: {
-						forUserId: ctx.viewer.id,
+			await distantApi.correspondenceRequest.individuals.fullyAcceptRequest.mutate({
+				correspondenceInitID: base.correspondenceInitID,
+				accessToken,
+			})
 
-						accessToken,
+			await ctx.db.individualLv3ACorrespondenceRequest.delete({
+				where: {
+					id: into.id,
+				},
+			})
 
-						isInitiator: true,
-						isService: false,
+			await ctx.db.correspondent.create({
+				data: {
+					forUserId: ctx.viewer.id,
 
-						correspondenceKeyMK: base.correspondenceKeyMK,
-						correspondenceKeyMKIV: base.correspondenceKeyMKIV,
-
-						userDisplayNameCK: into.userDisplayNameCK,
-						userDisplayNameCKIV: into.userDisplayNameCKIV,
-					},
-				})
-
-				const distantApi = createApiClient(base.serverUrl)
-
-				await distantApi.correspondenceRequest.individuals.fullyAcceptRequest.mutate({
-					correspondenceInitID: base.correspondenceInitID,
 					accessToken,
-				})
+
+					isInitiator: true,
+					isService: false,
+
+					correspondenceKeyMK: base.correspondenceKeyMK,
+					correspondenceKeyMKIV: base.correspondenceKeyMKIV,
+
+					userDisplayNameCK: into.userDisplayNameCK,
+					userDisplayNameCKIV: into.userDisplayNameCKIV,
+				},
 			})
 		}),
 
