@@ -305,7 +305,8 @@ export default createRouter({
 				})
 			}
 
-			const accessToken = generateRandomUUID()
+			const incomingAccessToken = generateRandomUUID()
+			const outgoingAccessToken = generateRandomUUID()
 
 			const into = base.into
 
@@ -313,7 +314,8 @@ export default createRouter({
 
 			await distantApi.correspondenceRequest.individuals.fullyAcceptRequest.mutate({
 				correspondenceInitID: base.correspondenceInitID,
-				accessToken,
+				incomingAccessToken: outgoingAccessToken,
+				outgoingAccessToken: incomingAccessToken,
 			})
 
 			await ctx.db.individualLv3ACorrespondenceRequest.delete({
@@ -326,7 +328,8 @@ export default createRouter({
 				data: {
 					forUserId: ctx.viewer.id,
 
-					accessToken,
+					incomingAccessToken,
+					outgoingAccessToken,
 
 					isInitiator: true,
 					isService: false,
@@ -345,7 +348,8 @@ export default createRouter({
 		.input(
 			z.object({
 				correspondenceInitID: z.string(),
-				accessToken: z.string(),
+				incomingAccessToken: z.string(),
+				outgoingAccessToken: z.string(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -387,7 +391,8 @@ export default createRouter({
 						isInitiator: false,
 						isService: false,
 
-						accessToken: input.accessToken,
+						incomingAccessToken: input.incomingAccessToken,
+						outgoingAccessToken: input.outgoingAccessToken,
 
 						correspondenceKeyMK: base.into.into.correspondenceKeyMK,
 						correspondenceKeyMKIV: base.into.into.correspondenceKeyMKIV,
