@@ -1,38 +1,61 @@
-import { createSignal } from 'solid-js'
+import { createSignal, Show } from 'solid-js'
 import { deserializeBuffer, serializeBuffer } from '../../common/base64'
 import { decryptSym, deriveKeyFromPassword, encryptSym, hash, importSymKey, parseJWK } from '../../common/crypto'
 import { bufferToText, textToBuffer, expectOk, fallible } from '../../common/utils'
 import { globalAccessToken, globalMasterKey } from '../../state'
 import { trpc } from '../../trpc-client'
+import { ErrorMessage } from '../atom/ErrorMessage'
 
 export const LoginForm = () => {
 	const [username, setUsername] = createSignal('')
 	const [password, setPassword] = createSignal('')
+	const [error, setError] = createSignal('')
 
 	async function login() {
+		setError('')
+
 		const usernameHash = await hash(expectOk(textToBuffer(username())))
 
-		const { passwordProofPlainText, passwordProofPKIV, passwordSalt } = await trpc.users.getLoginInformations.query({
-			usernameHash,
-		})
+		const loginInfos = await fallible(() =>
+			trpc.users.getLoginInformations.query({
+				usernameHash,
+			}),
+		)
+
+		if (loginInfos instanceof Error) {
+			setError(loginInfos.message)
+			return
+		}
+
+		const { passwordProofPlainText, passwordProofPKIV, passwordSalt } = loginInfos
 
 		const passwordKey = await deriveKeyFromPassword(
 			expectOk(textToBuffer(password())),
 			expectOk(deserializeBuffer(passwordSalt)),
 		)
+
 		const passwordProofPK = await encryptSym(
 			expectOk(deserializeBuffer(passwordProofPlainText)),
 			passwordKey,
 			expectOk(deserializeBuffer(passwordProofPKIV)),
 		)
 
+		const res = await fallible(() =>
+			trpc.users.login.mutate({
+				usernameHash,
+				passwordProofPK: serializeBuffer(passwordProofPK),
+			}),
+		)
+
+		if (res instanceof Error) {
+			setError(res.message)
+			return
+		}
+
 		const {
 			accessToken,
 			user: { masterKeyPK, masterKeyPKIV },
-		} = await trpc.users.login.mutate({
-			usernameHash,
-			passwordProofPK: serializeBuffer(passwordProofPK),
-		})
+		} = res
 
 		const decryptedMasterKey = await decryptSym(
 			expectOk(deserializeBuffer(masterKeyPK)),
@@ -47,12 +70,14 @@ export const LoginForm = () => {
 
 		globalAccessToken.set(accessToken)
 		globalMasterKey.set(Promise.resolve(masterKey))
-
-		// location.pathname = '/'
 	}
 
 	return (
 		<form onSubmit={(e) => e.preventDefault()}>
+			<Show when={error()}>
+				<ErrorMessage message={error()} />
+			</Show>
+
 			<input
 				type="text"
 				placeholder="Username"
