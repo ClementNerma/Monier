@@ -22,7 +22,6 @@
     "@trpc/client": "^10.9.0",
     "@trpc/server": "^10.9.0",
     "astro": "^1.9.2",
-    "nanostores": "^0.7.1",
     "prisma": "^4.9.0",
     "solid-js": "^1.6.9",
     "zod": "^3.20.2"

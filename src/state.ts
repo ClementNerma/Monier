@@ -1,16 +1,16 @@
-import { atom } from 'nanostores'
 import { CONSTANTS } from './common/constants'
 import { generateCookieEntry, getCookie } from './common/cookies'
 import { exportKey, importSymKey, parseJWK } from './common/crypto'
+import { createStore } from './common/stores'
 import { map } from './common/utils'
 
-export const globalAccessToken = atom(getCookie(document.cookie, CONSTANTS.cookieNames.accessToken))
+export const globalAccessToken = createStore(getCookie(document.cookie, CONSTANTS.cookieNames.accessToken))
 
 globalAccessToken.listen((token) => {
 	document.cookie = generateCookieEntry(CONSTANTS.cookieNames.accessToken, token ?? '')
 })
 
-export const globalMasterKey = atom(
+export const globalMasterKey = createStore(
 	map(localStorage.getItem(CONSTANTS.localStoreItems.masterKey), async (masterKey): Promise<CryptoKey> => {
 		const parsed = parseJWK(masterKey)
 
