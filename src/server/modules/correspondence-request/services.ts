@@ -36,7 +36,9 @@ export default createRouter({
 		)
 		.query<{ correspondenceKey: SymEncrypted }>(async ({ ctx, input }) => {
 			const request = await ctx.db.serviceCorrespondenceRequest.findUnique({
-				where: pick(input, ['correspondenceRequestId']),
+				where: {
+					correspondenceRequestId: input.correspondenceRequestId,
+				},
 			})
 
 			if (!request) {
