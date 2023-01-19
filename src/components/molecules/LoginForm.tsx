@@ -1,7 +1,7 @@
 import { createSignal } from 'solid-js'
 import { deserializeBuffer, serializeBuffer } from '../../common/base64'
 import { decryptSym, deriveKeyFromPassword, encryptSym, hash, importSymKey, parseJWK } from '../../common/crypto'
-import { bufferToText, textToBuffer, expectOk } from '../../common/utils'
+import { bufferToText, textToBuffer, expectOk, fallible } from '../../common/utils'
 import { globalAccessToken, globalMasterKey } from '../../state'
 import { trpc } from '../../trpc-client'
 
@@ -40,7 +40,10 @@ export const LoginForm = () => {
 			expectOk(deserializeBuffer(masterKeyPKIV)),
 		)
 
-		const masterKey = await importSymKey(parseJWK(expectOk(bufferToText(expectOk(decryptedMasterKey)))), true)
+		const masterKeyJWK = expectOk(bufferToText(expectOk(decryptedMasterKey)))
+		const rawMasterKey = expectOk(parseJWK(masterKeyJWK))
+
+		const masterKey = expectOk(await fallible(() => importSymKey(rawMasterKey, true)), 'Failed to import master key')
 
 		globalAccessToken.set(accessToken)
 		globalMasterKey.set(Promise.resolve(masterKey))

@@ -1,4 +1,3 @@
-import type { IndividualLv1BCorrespondenceRequest } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import { createApiClient } from '../../../common/trpc-client'
@@ -15,7 +14,7 @@ export default createRouter({
 		.input(
 			z.object({
 				correspondenceInitPrivateKeyMK: zSymEncrypted,
-				correspondenceInitPublicKey: z.string(),
+				correspondenceInitPublicKeyJWK: z.string(),
 			}),
 		)
 		.mutation<{ correspondenceCode: string }>(async ({ ctx, input }) => {
@@ -30,7 +29,7 @@ export default createRouter({
 					correspondenceInitID: generateRandomUUID(),
 					correspondenceInitPrivateKeyMK: input.correspondenceInitPrivateKeyMK.content,
 					correspondenceInitPrivateKeyMKIV: input.correspondenceInitPrivateKeyMK.iv,
-					correspondenceInitPublicKey: input.correspondenceInitPublicKey,
+					correspondenceInitPublicKeyJWK: input.correspondenceInitPublicKeyJWK,
 
 					correspondenceCode,
 				},
@@ -46,21 +45,19 @@ export default createRouter({
 				correspondenceCode: z.string(),
 			}),
 		)
-		.query<Pick<IndividualLv1BCorrespondenceRequest, 'correspondenceInitPublicKey' | 'correspondenceInitID'>>(
-			async ({ ctx, input }) => {
-				const request = await ctx.db.individualLv1BCorrespondenceRequest.findUnique({
-					where: {
-						correspondenceCode: input.correspondenceCode,
-					},
-				})
+		.query(async ({ ctx, input }) => {
+			const request = await ctx.db.individualLv1BCorrespondenceRequest.findUnique({
+				where: {
+					correspondenceCode: input.correspondenceCode,
+				},
+			})
 
-				if (!request) {
-					throw new TRPCError({ code: 'NOT_FOUND', message: 'Provided correspondence init. ID was not found' })
-				}
+			if (!request) {
+				throw new TRPCError({ code: 'NOT_FOUND', message: 'Provided correspondence init. ID was not found' })
+			}
 
-				return pick(request, ['correspondenceInitPublicKey', 'correspondenceInitID'])
-			},
-		),
+			return pick(request, ['correspondenceInitPublicKeyJWK', 'correspondenceInitID'])
+		}),
 
 	// From target (client) to target (server)
 	createAnswered: authProcedure

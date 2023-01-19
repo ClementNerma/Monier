@@ -126,20 +126,20 @@ export async function encryptSymForTRPC(data: Uint8Array, secretKey: CryptoKey):
 	return { content: serializeBuffer(content), iv: serializeBuffer(iv) }
 }
 
-export function parseJWK(encoded: string): JsonWebKey {
+export function parseJWK(encoded: string): JsonWebKey | Error {
 	// TODO: parse with Zod
 	return JSON.parse(encoded)
 }
 
-export async function importSymKey(key: JsonWebKey, exportable = false): Promise<CryptoKey> {
+export async function importSymKey(key: JsonWebKey, exportable = false): Promise<CryptoKey | Error> {
 	return await crypto.subtle.importKey('jwk', key, { name: CONSTANTS.symmetricalEncryptionAlgorithm }, exportable, [
 		'encrypt',
 		'decrypt',
 	])
 }
 
-export async function importAsymPublicKey(key: Uint8Array, exportable = false): Promise<CryptoKey> {
-	return await crypto.subtle.importKey('spki', key, { name: CONSTANTS.asymmetricalEncryptionAlgorithm }, exportable, [
+export async function importAsymPublicKey(key: JsonWebKey, exportable = false): Promise<CryptoKey | Error> {
+	return await crypto.subtle.importKey('jwk', key, { name: CONSTANTS.asymmetricalEncryptionAlgorithm }, exportable, [
 		'encrypt',
 	])
 }

@@ -9,6 +9,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
+    "check": "tsc && astro check",
     "format": "rome format ./src",
     "lint": "rome check ./src",
     "db:codegen": "prisma generate",
@@ -28,7 +29,8 @@
   },
   "devDependencies": {
     "@types/node": "^18.11.18",
-    "rome": "^11.0.0"
+    "rome": "^11.0.0",
+    "typescript": "^4.9.4"
   },
   "volta": {
     "node": "19.4.0"

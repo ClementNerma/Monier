@@ -13,7 +13,7 @@ export const CorrespondenceCodeGenerator = () => {
 		const { publicKey, privateKey } = await generateAsymmetricKeyPair()
 
 		const { correspondenceCode } = await trpc.correspondenceRequest.individuals.generateCode.mutate({
-			correspondenceInitPublicKey: await exportKey(publicKey),
+			correspondenceInitPublicKeyJWK: await exportKey(publicKey),
 			correspondenceInitPrivateKeyMK: await encryptSymForTRPC(
 				textToBuffer(await exportKey(privateKey)),
 				await expectMasterKey(),

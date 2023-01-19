@@ -11,7 +11,23 @@ globalAccessToken.listen((token) => {
 })
 
 export const globalMasterKey = atom(
-	map(localStorage.getItem(CONSTANTS.localStoreItems.masterKey), (masterKey) => importSymKey(parseJWK(masterKey))),
+	map(localStorage.getItem(CONSTANTS.localStoreItems.masterKey), async (masterKey): Promise<CryptoKey> => {
+		const parsed = parseJWK(masterKey)
+
+		if (parsed instanceof Error) {
+			localStorage.removeItem(CONSTANTS.localStoreItems.masterKey)
+			throw new Error(`Found invalid JWK master key in local storage: ${parsed.message}`)
+		}
+
+		const result = await importSymKey(parsed)
+
+		if (result instanceof Error) {
+			// localStorage.removeItem(CONSTANTS.localStoreItems.masterKey)
+			throw new Error(`Failed to import master key from local storage: ${result.message}`)
+		}
+
+		return result
+	}),
 )
 
 globalMasterKey.listen(async (masterKey) =>

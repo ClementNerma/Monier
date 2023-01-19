@@ -19,21 +19,21 @@ const serverMiddleware = createMiddleware(({ ctx, next }) => {
 
 const serverProcedure = publicProcedure.use(serverMiddleware)
 
-const serverAuthProcedure = serverProcedure.use(({ ctx, next }) => {
-	if (!ctx.server.resolvedSession) {
-		throw new Error('Internal error: this procedure is reserved to authenticated users')
-	}
+// const serverAuthProcedure = serverProcedure.use(({ ctx, next }) => {
+// 	if (!ctx.server.resolvedSession) {
+// 		throw new Error('Internal error: this procedure is reserved to authenticated users')
+// 	}
 
-	return next({
-		ctx: {
-			...ctx,
-			server: {
-				...ctx.server,
-				resolvedSession: ctx.server.resolvedSession,
-			},
-		},
-	})
-})
+// 	return next({
+// 		ctx: {
+// 			...ctx,
+// 			server: {
+// 				...ctx.server,
+// 				resolvedSession: ctx.server.resolvedSession,
+// 			},
+// 		},
+// 	})
+// })
 
 export default createRouter({
 	viewer: serverProcedure.query(({ ctx }) => ctx.server.resolvedSession?.user),

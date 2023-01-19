@@ -39,9 +39,9 @@ export async function fallible<T>(fn: () => Promise<T>): Promise<T | Error> {
 	}
 }
 
-export function expectOk<T>(value: T | Error): T {
+export function expectOk<T>(value: T | Error, message?: string): T {
 	if (value instanceof Error) {
-		alert(`An error occurred: ${value.message}`)
+		alert(`${message ?? 'An error occurred'}\n${value.message}`)
 		throw value
 	}
 

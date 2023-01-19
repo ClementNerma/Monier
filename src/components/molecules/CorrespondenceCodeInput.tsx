@@ -7,8 +7,10 @@ import {
 	exportKey,
 	generateSymmetricKey,
 	importAsymPublicKey,
+	generateAsymmetricKeyPair,
+	parseJWK,
 } from '../../common/crypto'
-import { expectOk, textToBuffer } from '../../common/utils'
+import { expectOk, fallible, textToBuffer } from '../../common/utils'
 import { createApiClient } from '../../common/trpc-client'
 import { expectMasterKey } from '../../state'
 import { trpc } from '../../trpc-client'
@@ -37,18 +39,20 @@ export const CorrespondenceCodeInput = ({ displayNameMK, displayNameMKIV }: Corr
 
 		const distantApi = createApiClient(distantUrl)
 
-		const { correspondenceInitID, correspondenceInitPublicKey } =
+		const { correspondenceInitID, correspondenceInitPublicKeyJWK } =
 			await distantApi.correspondenceRequest.individuals.getPublicKey.query({
 				correspondenceCode: correspondenceCode(),
 			})
 
-		const pubKeyBuff = await deserializeBuffer(correspondenceInitPublicKey)
+		const rawCorrespondencePublicKey = expectOk(
+			parseJWK(correspondenceInitPublicKeyJWK),
+			'Failed to parse correspondence public key',
+		)
 
-		if (pubKeyBuff instanceof Error) {
-			return alert('Distant API returned an invalid correspondence init. public key buffer')
-		}
-
-		const pubKey = await importAsymPublicKey(pubKeyBuff)
+		const pubKey = expectOk(
+			await fallible(() => importAsymPublicKey(rawCorrespondencePublicKey)),
+			'Failed to import correspondence public key',
+		)
 
 		const correspondenceKeyJWK = textToBuffer(await exportKey(await generateSymmetricKey()))
 
@@ -65,6 +69,11 @@ export const CorrespondenceCodeInput = ({ displayNameMK, displayNameMKIV }: Corr
 		setCorrespondenceCode('')
 		setServerUrl('')
 	}
+
+	generateAsymmetricKeyPair().then(async (pair) => {
+		const exp = await exportKey(pair.publicKey)
+		console.log(exp)
+	})
 
 	return (
 		<form onSubmit={(e) => e.preventDefault()}>
