@@ -7,6 +7,7 @@ import { pick } from '../../../common/utils'
 import { createRouter } from '../../router'
 import { zSymEncrypted } from '../../types'
 import { authProcedure, publicProcedure } from '../auth'
+import { CONFIG } from '../../config'
 
 export default createRouter({
 	// From initiator (client) to initiator (server)
@@ -94,7 +95,7 @@ export default createRouter({
 					correspondenceInitID: input.correspondenceInitID,
 					correspondenceKeyCIPK: input.correspondenceKeyCIPK,
 					displayNameCK: input.displayNameCK,
-					serverUrl: 'TODO', // Current server's URL
+					serverUrl: CONFIG.CURRENT_SERVER_URL,
 				})
 			})
 		}),

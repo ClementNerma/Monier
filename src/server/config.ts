@@ -22,7 +22,7 @@ function parseEnv<O extends object>(schema: { [Key in keyof O]: Parser<O[Key]> }
 	)
 }
 
-// const string: Parser<string> = (value) => value
+const string: Parser<string> = (value) => value
 // const bool: Parser<boolean> = (value) => (value === 'true' ? true : value === 'false' ? false : new Error())
 const int: Parser<number> = (value) => {
 	const parsed = parseInt(value)
@@ -30,5 +30,6 @@ const int: Parser<number> = (value) => {
 }
 
 export const CONFIG = parseEnv({
+	CURRENT_SERVER_URL: string,
 	SESSION_EXPIRES_AFTER_HOURS: int,
 })

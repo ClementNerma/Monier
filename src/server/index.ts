@@ -9,8 +9,13 @@ import correspondenceRequest from './modules/correspondence-request'
 import correspondents from './modules/correspondents'
 import server from './modules/server'
 
-// Ensure the configuration will be parsed for error reporting
-import './config'
+import { CONFIG } from './config'
+
+const serverUrl = new URL(CONFIG.CURRENT_SERVER_URL)
+
+if (serverUrl.protocol !== 'https') {
+	console.warn('WARNING: the server\'s protocol should ALWAYS be "https"!')
+}
 
 export const appRouter = createRouter({
 	auth,
