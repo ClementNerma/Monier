@@ -9,8 +9,9 @@ import {
 	importAsymPublicKey,
 } from '../../common/crypto'
 import { expectOk, textToBuffer } from '../../common/utils'
+import { createApiClient } from '../../server'
 import { expectMasterKey } from '../../state'
-import { createApiClient, trpc } from '../../trpc-client'
+import { trpc } from '../../trpc-client'
 
 export type CorrespondenceCodeInputProps = {
 	displayNameMK: string
