@@ -1,6 +1,5 @@
-import type { SymEncrypted } from '../server/types'
 import { serializeBuffer } from './base64'
-import { fallible } from './utils'
+import { fallible, mapUnion } from './utils'
 
 const crypto = globalThis.crypto
 
@@ -88,8 +87,8 @@ export async function encryptSym(data: Uint8Array, secretKey: CryptoKey, iv: Uin
 
 export async function decryptSym(
 	encrypted: Uint8Array,
-	secretKey: CryptoKey,
 	iv: Uint8Array,
+	secretKey: CryptoKey,
 ): Promise<Uint8Array | Error> {
 	const buff = await fallible(() =>
 		crypto.subtle.decrypt(
@@ -119,32 +118,30 @@ export async function decryptAsym(encrypted: Uint8Array, publicKey: CryptoKey): 
 	return decrypted instanceof Error ? decrypted : new Uint8Array(decrypted)
 }
 
-export async function encryptSymForTRPC(data: Uint8Array, secretKey: CryptoKey): Promise<SymEncrypted> {
-	const iv = generateIV()
-	const content = await encryptSym(data, secretKey, iv)
-
-	return { content: serializeBuffer(content), iv: serializeBuffer(iv) }
-}
-
 export function parseJWK(encoded: string): JsonWebKey | Error {
 	// TODO: parse with Zod
 	return JSON.parse(encoded)
 }
 
-export async function importSymKey(key: JsonWebKey, exportable = false): Promise<CryptoKey | Error> {
-	return await crypto.subtle.importKey('jwk', key, { name: CONSTANTS.symmetricalEncryptionAlgorithm }, exportable, [
-		'encrypt',
-		'decrypt',
-	])
-}
-
-export async function importAsymPublicKey(key: JsonWebKey, exportable = false): Promise<CryptoKey | Error> {
+export async function importKey(
+	key: JsonWebKey,
+	type: 'sym' | 'asymPub' | 'asymPriv',
+	exportable = false,
+): Promise<CryptoKey | Error> {
 	return await crypto.subtle.importKey(
 		'jwk',
 		key,
-		{ name: CONSTANTS.asymmetricalEncryptionAlgorithm, hash: CONSTANTS.hashAlgorithm },
+		mapUnion(type)({
+			sym: { name: CONSTANTS.symmetricalEncryptionAlgorithm },
+			asymPub: { name: CONSTANTS.asymmetricalEncryptionAlgorithm, hash: CONSTANTS.hashAlgorithm },
+			asymPriv: { name: CONSTANTS.asymmetricalEncryptionAlgorithm, hash: CONSTANTS.hashAlgorithm },
+		}),
 		exportable,
-		['encrypt'],
+		mapUnion(type)({
+			sym: ['encrypt', 'decrypt'],
+			asymPub: ['encrypt'],
+			asymPriv: ['decrypt'],
+		}),
 	)
 }
 

@@ -1,5 +1,6 @@
 import { createSignal } from 'solid-js'
-import { encryptSymForTRPC, exportKey, generateAsymmetricKeyPair } from '../../common/crypto'
+import { exportKey, generateAsymmetricKeyPair } from '../../common/crypto'
+import { encryptSymForTRPC } from '../../common/crypto-trpc'
 import { textToBuffer } from '../../common/utils'
 import { expectMasterKey } from '../../state'
 import { trpc } from '../../trpc-client'

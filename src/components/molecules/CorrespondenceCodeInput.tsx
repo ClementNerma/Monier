@@ -1,18 +1,11 @@
 import { createSignal, Show } from 'solid-js'
 import { deserializeBuffer, serializeBuffer } from '../../common/base64'
-import {
-	decryptSym,
-	encryptAsym,
-	encryptSymForTRPC,
-	exportKey,
-	generateSymmetricKey,
-	importAsymPublicKey,
-	parseJWK,
-} from '../../common/crypto'
+import { decryptSym, encryptAsym, importKey, exportKey, generateSymmetricKey, parseJWK } from '../../common/crypto'
 import { expectOk, fallible, textToBuffer } from '../../common/utils'
 import { createApiClient } from '../../common/trpc-client'
 import { expectMasterKey } from '../../state'
 import { trpc } from '../../trpc-client'
+import { encryptSymForTRPC } from '../../common/crypto-trpc'
 
 export type CorrespondenceCodeInputProps = {
 	displayNameMK: string
@@ -34,8 +27,8 @@ export const CorrespondenceCodeInput = ({ displayNameMK, displayNameMKIV }: Corr
 		const displayName = expectOk(
 			await decryptSym(
 				expectOk(deserializeBuffer(displayNameMK)),
-				masterKey,
 				expectOk(deserializeBuffer(displayNameMKIV)),
+				masterKey,
 			),
 		)
 
@@ -54,7 +47,7 @@ export const CorrespondenceCodeInput = ({ displayNameMK, displayNameMKIV }: Corr
 		)
 
 		const pubKey = expectOk(
-			await fallible(() => importAsymPublicKey(rawCorrespondencePublicKey)),
+			await fallible(() => importKey(rawCorrespondencePublicKey, 'asymPub')),
 			'Failed to import correspondence public key',
 		)
 

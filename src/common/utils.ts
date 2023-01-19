@@ -41,8 +41,7 @@ export async function fallible<T>(fn: () => Promise<T>): Promise<T | Error> {
 
 export function expectOk<T>(value: T | Error, message?: string): T {
 	if (value instanceof Error) {
-		alert(`${message ?? 'An error occurred'}\n${value.message}`)
-		throw value
+		throw new Error(`${message ? `${message}\n` : ''}${value.message}`)
 	}
 
 	return value
@@ -56,3 +55,5 @@ export async function parallel<O extends { [key: string]: Promise<unknown> }>(ob
 	const promised = entries.map(([key, _], i) => [key, promises[i]])
 	return Object.fromEntries(promised)
 }
+
+export type MaybeObj<T extends object> = T | {}

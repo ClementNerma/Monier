@@ -2,13 +2,13 @@ import { createSignal } from 'solid-js'
 import { serializeBuffer } from '../../common/base64'
 import {
 	deriveKeyFromPassword,
-	encryptSymForTRPC,
 	exportKey,
 	generateRandomBuffer,
 	generateSalt,
 	generateSymmetricKey,
 	hash,
 } from '../../common/crypto'
+import { encryptSymForTRPC } from '../../common/crypto-trpc'
 import { expectOk, textToBuffer } from '../../common/utils'
 import { trpc } from '../../trpc-client'
 

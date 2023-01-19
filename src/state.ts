@@ -1,6 +1,6 @@
 import { CONSTANTS } from './common/constants'
 import { generateCookieEntry, getCookie } from './common/cookies'
-import { exportKey, importSymKey, parseJWK } from './common/crypto'
+import { exportKey, importKey, parseJWK } from './common/crypto'
 import { createStore } from './common/stores'
 
 function getSavedCredentials() {
@@ -23,7 +23,7 @@ function getSavedCredentials() {
 		throw new Error(`Found invalid JWK master key in local storage: ${parsed.message}`)
 	}
 
-	return importSymKey(parsed).then((masterKey) => {
+	return importKey(parsed, 'sym').then((masterKey) => {
 		if (masterKey instanceof Error) {
 			// localStorage.removeItem(CONSTANTS.localStoreItems.masterKey)
 			throw new Error(`Failed to import master key from local storage: ${masterKey.message}`)
@@ -53,14 +53,16 @@ savedCredentials.listen(async (promise) => {
 	localStorage.setItem(CONSTANTS.localStoreItems.masterKey, exportedMasterKey)
 })
 
-export function expectMasterKey(): Promise<CryptoKey> {
+export async function expectMasterKey(): Promise<CryptoKey> {
 	const credentials = savedCredentials.get()
 
 	if (!credentials) {
-		const msg = 'Error: no master key setup!'
-		alert(msg)
-		throw new Error(msg)
+		throw new Error('Error: no master key setup!')
 	}
 
-	return credentials.then((credentials) => credentials.masterKey)
+	const { masterKey } = await credentials
+
+	return masterKey
 }
+
+export const importedMKKeys = new Map<string, CryptoKey>()
