@@ -67,18 +67,30 @@ export const CorrespondenceCodeInput = ({ displayNameMK, displayNameMKIV }: Corr
 	}
 
 	return (
-		<div>
+		<form>
 			<label>Correspondence code :</label>{' '}
-			<input type="text" value={correspondenceCode()} onInput={(e) => setCorrespondenceCode(e.currentTarget.value)} />
+			<input
+				type="text"
+				autocomplete='off'
+				required
+				value={correspondenceCode()}
+				onInput={(e) => setCorrespondenceCode(e.currentTarget.value)}
+			/>
 
 			<br />
 
 			<label>Server URL:</label>{' '}
-			<input type="text" value={serverUrl()} onInput={(e) => setServerUrl(e.currentTarget.value)} />
+			<input
+				type="url"
+				autocomplete='url'
+				required
+				value={serverUrl()}
+				onInput={(e) => setServerUrl(e.currentTarget.value)}
+			/>
 
 			<br />
 
-			<button onClick={submit}>Submit</button>
-		</div>
+			<input type="submit" onClick={submit} value="Submit" />
+		</form>
 	)
 }

@@ -49,11 +49,24 @@ export const LoginForm = () => {
 	}
 
 	return (
-		<div>
-			<input type="text" placeholder="Username" required onChange={(e) => setUsername(e.currentTarget.value)} />
-			<input type="password" placeholder="Password" required onChange={(e) => setPassword(e.currentTarget.value)} />
+		<form>
+			<input
+				type="text"
+				placeholder="Username"
+				autocomplete='usernmae'
+				required
+				onChange={(e) => setUsername(e.currentTarget.value)}
+			/>
+
+			<input
+				type="password"
+				placeholder="Password"
+				autocomplete='current-password'
+				required
+				onChange={(e) => setPassword(e.currentTarget.value)}
+			/>
 
 			<input type="submit" value="Submit" onClick={login} />
-		</div>
+		</form>
 	)
 }

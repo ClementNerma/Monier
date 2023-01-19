@@ -40,11 +40,32 @@ export const RegisterForm = () => {
 	}
 
 	return (
-		<div>
-			<input type="text" placeholder="Username" required onChange={(e) => setUsername(e.currentTarget.value)} />
-			<input type="text" placeholder="Display name" required onChange={(e) => setDisplayName(e.currentTarget.value)} />
-			<input type="password" placeholder="Password" required onChange={(e) => setPassword(e.currentTarget.value)} />
+		<form>
+			<input
+				type="text"
+				placeholder="Username"
+				autocomplete='username'
+				required
+				onChange={(e) => setUsername(e.currentTarget.value)}
+			/>
+
+			<input
+				type="text"
+				placeholder="Display name"
+				autocomplete='name'
+				required
+				onChange={(e) => setDisplayName(e.currentTarget.value)}
+			/>
+
+			<input
+				type="password"
+				placeholder="Password"
+				autocomplete='new-password'
+				required
+				onChange={(e) => setPassword(e.currentTarget.value)}
+			/>
+
 			<input type="submit" value="Submit" onClick={register} />
-		</div>
+		</form>
 	)
 }
