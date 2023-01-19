@@ -9,7 +9,7 @@ import {
 	importAsymPublicKey,
 } from '../../common/crypto'
 import { expectOk, textToBuffer } from '../../common/utils'
-import { createApiClient } from '../../server'
+import { createApiClient } from '../../common/trpc-client'
 import { expectMasterKey } from '../../state'
 import { trpc } from '../../trpc-client'
 

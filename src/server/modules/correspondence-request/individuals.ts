@@ -1,7 +1,7 @@
 import type { IndividualLv1BCorrespondenceRequest } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
-import { createApiClient } from '../..'
+import { createApiClient } from '../../../common/trpc-client'
 import { generateRandomUUID } from '../../../common/crypto'
 import { pick } from '../../../common/utils'
 import { createRouter } from '../../router'
