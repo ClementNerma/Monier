@@ -1,8 +1,9 @@
 import { createSignal, onMount, Show } from 'solid-js'
 import { deserializeBuffer } from '../../common/base64'
-import { decryptSym, importKey, parseJWK } from '../../common/crypto'
+import { decryptSym } from '../../common/crypto'
+import { decryptTextSymFromTRPC, importKeyFromTRPC } from '../../common/crypto-trpc'
 import { bufferToText } from '../../common/utils'
-import { importedMKKeys, savedCredentials } from '../../state'
+import { expectMasterKey, importedMKKeys } from '../../state'
 import { ErrorMessage } from './ErrorMessage'
 
 export type DecryptProps = {
@@ -17,9 +18,9 @@ export type DecryptPropsKey =
 	// Provided CryptoKey
 	| { with: 'direct'; key: CryptoKey }
 	// Plain text JWK key
-	| { with: 'plainKey'; content: string }
+	| { with: 'jwk'; content: string }
 	// JWK symmetryc key encrypted with the Master Key
-	| { with: 'symMK'; content: string; iv: string }
+	| { with: 'jwkMK'; content: string; iv: string }
 
 export const Decrypt = (props: DecryptProps) => {
 	const [error, setError] = createSignal('')
@@ -52,7 +53,7 @@ async function getKey(key: DecryptPropsKey): Promise<CryptoKey | Error> {
 		return key.key
 	}
 
-	if (key.with === 'plainKey' || key.with === 'symMK') {
+	if (key.with === 'jwk' || key.with === 'jwkMK') {
 		const existing = importedMKKeys.get(key.content)
 
 		if (existing) {
@@ -60,51 +61,23 @@ async function getKey(key: DecryptPropsKey): Promise<CryptoKey | Error> {
 		}
 	}
 
-	if (key.with === 'masterKey' || key.with === 'symMK') {
-		const credentials = await savedCredentials.get()
-
-		if (!credentials) {
-			return new Error('No credentials saved')
-		}
+	if (key.with === 'masterKey' || key.with === 'jwkMK') {
+		const masterKey = await expectMasterKey()
 
 		if (key.with === 'masterKey') {
-			return credentials.masterKey
+			return masterKey
 		}
 
-		const encryptedKey = deserializeBuffer(key.content)
+		const keyJWK = await decryptTextSymFromTRPC(key.content, key.iv, masterKey)
 
-		if (encryptedKey instanceof Error) {
-			return new Error('Failed to deserialize the encrypted key buffer')
-		}
-
-		const iv = deserializeBuffer(key.iv)
-
-		if (iv instanceof Error) {
-			return new Error('Failed to deserialize the encrypted key IV')
-		}
-
-		const decryptedKey = await decryptSym(encryptedKey, iv, credentials.masterKey)
-
-		if (decryptedKey instanceof Error) {
-			return new Error('Failed to decrypt the second layer encryption key')
-		}
-
-		const decryptedKeyJWK = bufferToText(decryptedKey)
-
-		if (decryptedKeyJWK instanceof Error) {
+		if (keyJWK instanceof Error) {
 			return new Error('Failed to decode the second layer encryption key')
 		}
 
-		key = { with: 'plainKey', content: decryptedKeyJWK }
+		key = { with: 'jwk', content: keyJWK }
 	}
 
-	const parsed = parseJWK(key.content)
-
-	if (parsed instanceof Error) {
-		return new Error('Failed to parse the provided key')
-	}
-
-	const imported = await importKey(parsed, 'sym')
+	const imported = await importKeyFromTRPC(key.content, 'sym')
 
 	if (imported instanceof Error) {
 		return new Error('Failed to import the provided key')

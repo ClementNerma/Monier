@@ -57,7 +57,7 @@ export async function expectMasterKey(): Promise<CryptoKey> {
 	const credentials = savedCredentials.get()
 
 	if (!credentials) {
-		throw new Error('Error: no master key setup!')
+		throw new Error('Error: no credentials setup!')
 	}
 
 	const { masterKey } = await credentials
