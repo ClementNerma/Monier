@@ -86,7 +86,11 @@ export async function decryptTextAsymFromTRPC(data: string, privateKey: CryptoKe
 	return text
 }
 
-export async function importKeyFromTRPC(jwk: string, type: 'sym' | 'asymPub' | 'asymPriv'): Promise<CryptoKey | Error> {
+export async function importKeyFromTRPC(
+	jwk: string,
+	type: 'sym' | 'asymPub' | 'asymPriv',
+	exportable?: boolean,
+): Promise<CryptoKey | Error> {
 	const existing = importedKeys.get(jwk)
 
 	if (existing) {
@@ -99,7 +103,7 @@ export async function importKeyFromTRPC(jwk: string, type: 'sym' | 'asymPub' | '
 		return new Error('Failed to parse the provided JsonWebKey')
 	}
 
-	const imported = await importKey(parsed, type)
+	const imported = await importKey(parsed, type, exportable)
 
 	if (imported instanceof Error) {
 		return new Error('Failed to import the provided JsonWebKey')
