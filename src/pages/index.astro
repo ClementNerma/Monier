@@ -53,9 +53,13 @@ const data = await parallel({
                 <td>
                   <Decrypt
                     client:only
-                    data={corr.correspondenceKeyMK}
-                    iv={corr.correspondenceKeyMKIV}
-                    decrypt={{ with: "masterKey" }}
+                    data={corr.userDisplayNameCK}
+                    iv={corr.userDisplayNameCKIV}
+                    decrypt={{
+                      with: "jwkMK",
+                      content: corr.correspondenceKeyMK,
+                      iv: corr.correspondenceKeyMKIV,
+                    }}
                   />
                 </td>
                 <td>{corr.isService ? "Yes" : "No"}</td>
