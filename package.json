@@ -17,13 +17,13 @@
   },
   "dependencies": {
     "@astrojs/node": "^4.0.0",
-    "@astrojs/solid-js": "^1.2.3",
+    "@astrojs/vue": "^1.2.2",
     "@prisma/client": "^4.9.0",
     "@trpc/client": "^10.9.0",
     "@trpc/server": "^10.9.0",
     "astro": "^1.9.2",
     "prisma": "^4.9.0",
-    "solid-js": "^1.6.9",
+    "vue": "^3.2.30",
     "zod": "^3.20.2"
   },
   "devDependencies": {

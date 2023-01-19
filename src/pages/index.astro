@@ -1,12 +1,12 @@
 ---
 import { parallel } from "../common/utils";
-import { Decrypt } from "../components/atom/Decrypt";
-import { CorrespondenceCodeGenerator } from "../components/molecules/CorrespondenceCodeGenerator";
-import { CorrespondenceCodeInput } from "../components/molecules/CorrespondenceCodeInput";
-import { PendingFilledCorrespondenceRequests } from "../components/molecules/PendingFilledCorrespondenceRequests";
-import { PendingFullyFilledCorrespondenceRequests } from "../components/molecules/PendingFullyFilledCorrespondenceRequests";
 import Layout from "../Layout.astro";
+import Decrypt from "../components/atom/Decrypt.vue";
 import { serverApp } from "../server";
+import CorrespondenceCodeGenerator from "../components/molecules/CorrespondenceCodeGenerator.vue";
+import CorrespondenceCodeInput from "../components/molecules/CorrespondenceCodeInput.vue";
+import PendingFilledCorrespondenceRequests from "../components/molecules/PendingFilledCorrespondenceRequests.vue";
+import PendingFullyFilledCorrespondenceRequests from "../components/molecules/PendingFullyFilledCorrespondenceRequests.vue"
 
 const app = await serverApp(Astro);
 const viewer = await app.server.viewer();
@@ -27,12 +27,12 @@ const data = await parallel({
 <Layout title="Home">
   <main>
     <h2>
-      Hello, <Decrypt
+      <Decrypt
         client:only
         data={viewer.displayNameMK}
         iv={viewer.displayNameMKIV}
         decrypt={{ with: "masterKey" }}
-      />!
+      />
     </h2>
 
     <div class="container">
