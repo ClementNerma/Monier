@@ -67,7 +67,7 @@ export const CorrespondenceCodeInput = ({ displayNameMK, displayNameMKIV }: Corr
 	}
 
 	return (
-		<form>
+		<form onSubmit={(e) => e.preventDefault()}>
 			<label>Correspondence code :</label>{' '}
 			<input
 				type="text"

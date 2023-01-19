@@ -49,7 +49,7 @@ export const LoginForm = () => {
 	}
 
 	return (
-		<form>
+		<form onSubmit={(e) => e.preventDefault()}>
 			<input
 				type="text"
 				placeholder="Username"
