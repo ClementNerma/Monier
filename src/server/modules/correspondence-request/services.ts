@@ -45,7 +45,7 @@ export default createRouter({
 
 			if (request.forUserId !== ctx.viewer.id) {
 				throw new TRPCError({
-					code: 'UNAUTHORIZED',
+					code: 'FORBIDDEN',
 					message: 'Provided correspondence request belongs to another user',
 				})
 			}
@@ -77,7 +77,7 @@ export default createRouter({
 
 			if (request.forUserId !== ctx.viewer.id) {
 				throw new TRPCError({
-					code: 'UNAUTHORIZED',
+					code: 'FORBIDDEN',
 					message: 'Provided correspondence request belongs to another user',
 				})
 			}

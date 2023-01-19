@@ -282,7 +282,7 @@ export default createRouter({
 			}
 
 			if (base.forUserId !== ctx.viewer.id) {
-				throw new TRPCError({ code: 'UNAUTHORIZED', message: 'The provided correspondence belongs to another user' })
+				throw new TRPCError({ code: 'FORBIDDEN', message: 'The provided correspondence belongs to another user' })
 			}
 
 			if (!base.into) {
