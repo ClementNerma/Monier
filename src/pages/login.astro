@@ -1,14 +1,20 @@
 ---
 import Layout from "../Layout.astro";
 import { LoginForm } from "../components/molecules/LoginForm";
+import { serverApp } from "../server";
+
+const app = await serverApp(Astro);
+const viewer = await app.server.viewer();
+
+console.log({ viewer });
 ---
 
 <Layout title="Login">
-	<main>
-		<h2>Login</h2>
+  <main>
+    <h2>Login</h2>
 
-		<LoginForm client:only />
+    <LoginForm client:only />
 
-		<a href="/register">Register</a>
-	</main>
+    <a href="/register">Register</a>
+  </main>
 </Layout>

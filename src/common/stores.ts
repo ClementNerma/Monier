@@ -7,12 +7,17 @@ export class Store<T> {
 		return this.value
 	}
 
-	set(newValue: T, afterUpdate?: () => void): void {
+	set(newValue: T): void {
+		this.value = newValue
+		this.listeners.forEach((listener) => listener(newValue))
+	}
+
+	async setAndWait(newValue: T): Promise<boolean> {
 		this.value = newValue
 
-		this.listeners.forEach((listener) => listener(newValue))
+		const promises = await Promise.allSettled([...this.listeners.values()].map((listener) => listener(this.value)))
 
-		afterUpdate?.()
+		return promises.every((prom) => prom.status === 'fulfilled')
 	}
 
 	listen(listener: StoreListener<T>): () => void {
@@ -33,7 +38,7 @@ export class Store<T> {
 	}
 }
 
-export type StoreListener<T> = (value: T) => void
+export type StoreListener<T> = (value: T) => void | Promise<void>
 
 export function createStore<T>(value: T): Store<T> {
 	return new Store(value)

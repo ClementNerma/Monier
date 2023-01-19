@@ -7,7 +7,6 @@ import {
 	exportKey,
 	generateSymmetricKey,
 	importAsymPublicKey,
-	generateAsymmetricKeyPair,
 	parseJWK,
 } from '../../common/crypto'
 import { expectOk, fallible, textToBuffer } from '../../common/utils'
@@ -69,11 +68,6 @@ export const CorrespondenceCodeInput = ({ displayNameMK, displayNameMKIV }: Corr
 		setCorrespondenceCode('')
 		setServerUrl('')
 	}
-
-	generateAsymmetricKeyPair().then(async (pair) => {
-		const exp = await exportKey(pair.publicKey)
-		console.log(exp)
-	})
 
 	return (
 		<form onSubmit={(e) => e.preventDefault()}>

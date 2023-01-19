@@ -2,7 +2,7 @@ import { createSignal, Show } from 'solid-js'
 import { deserializeBuffer, serializeBuffer } from '../../common/base64'
 import { decryptSym, deriveKeyFromPassword, encryptSym, hash, importSymKey, parseJWK } from '../../common/crypto'
 import { bufferToText, textToBuffer, expectOk, fallible } from '../../common/utils'
-import { globalAccessToken, globalMasterKey } from '../../state'
+import { savedCredentials } from '../../state'
 import { trpc } from '../../trpc-client'
 import { ErrorMessage } from '../atom/ErrorMessage'
 
@@ -68,8 +68,13 @@ export const LoginForm = () => {
 
 		const masterKey = expectOk(await fallible(() => importSymKey(rawMasterKey, true)), 'Failed to import master key')
 
-		globalAccessToken.set(accessToken)
-		globalMasterKey.set(Promise.resolve(masterKey))
+		const saved = await savedCredentials.setAndWait(Promise.resolve({ accessToken, masterKey }))
+
+		if (!saved) {
+			setError('An error occurred while saving the credentials locally')
+		} else {
+			location.pathname = '/'
+		}
 	}
 
 	return (

@@ -2,7 +2,7 @@ import { createSignal, onCleanup, onMount } from 'solid-js'
 import { deserializeBuffer } from '../../common/base64'
 import { decryptSym } from '../../common/crypto'
 import { bufferToText, mapUnion } from '../../common/utils'
-import { globalMasterKey } from '../../state'
+import { savedCredentials } from '../../state'
 
 export type DecryptProps = {
 	// Serialized buffer
@@ -25,8 +25,8 @@ export const Decrypt = ({ data, iv }: DecryptProps) => {
 
 	onMount(() =>
 		setRemoveListener({
-			remove: globalMasterKey.subscribe(async (masterKey) => {
-				if (masterKey === null) {
+			remove: savedCredentials.subscribe(async (credentials) => {
+				if (credentials === null) {
 					setStatus(['noMasterKey', null])
 					return
 				}
@@ -45,7 +45,9 @@ export const Decrypt = ({ data, iv }: DecryptProps) => {
 					return
 				}
 
-				const decrypted = await decryptSym(dataBuffer, await masterKey, ivBuffer)
+				const { masterKey } = await credentials
+
+				const decrypted = await decryptSym(dataBuffer, masterKey, ivBuffer)
 
 				if (decrypted instanceof Error) {
 					setStatus(['decryptionFailed', null])
