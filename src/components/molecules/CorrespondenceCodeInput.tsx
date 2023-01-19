@@ -1,11 +1,16 @@
 import { createSignal, Show } from 'solid-js'
-import { deserializeBuffer, serializeBuffer } from '../../common/base64'
-import { decryptSym, encryptAsym, importKey, exportKey, generateSymmetricKey, parseJWK } from '../../common/crypto'
-import { expectOk, fallible, textToBuffer } from '../../common/utils'
+import { serializeBuffer } from '../../common/base64'
+import { encryptAsym, exportKey, generateSymmetricKey } from '../../common/crypto'
+import { expectOk, textToBuffer } from '../../common/utils'
 import { createApiClient } from '../../common/trpc-client'
 import { expectMasterKey } from '../../state'
 import { trpc } from '../../trpc-client'
-import { encryptSymForTRPC } from '../../common/crypto-trpc'
+import {
+	decryptTextSymFromTRPC,
+	encryptSymForTRPC,
+	encryptTextSymForTRPC,
+	importKeyFromTRPC,
+} from '../../common/crypto-trpc'
 
 export type CorrespondenceCodeInputProps = {
 	displayNameMK: string
@@ -18,20 +23,15 @@ export const CorrespondenceCodeInput = ({ displayNameMK, displayNameMKIV }: Corr
 	const [status, setStatus] = createSignal('')
 
 	async function submit() {
-		setStatus('Contacting distant server...')
-
-		const distantUrl = serverUrl()
+		setStatus('Decrypting local personal informations...')
 
 		const masterKey = await expectMasterKey()
 
-		const displayName = expectOk(
-			await decryptSym(
-				expectOk(deserializeBuffer(displayNameMK)),
-				expectOk(deserializeBuffer(displayNameMKIV)),
-				masterKey,
-			),
-		)
+		const displayName = expectOk(await decryptTextSymFromTRPC(displayNameMK, displayNameMKIV, masterKey))
 
+		setStatus('Contacting distant server...')
+
+		const distantUrl = serverUrl()
 		const distantApi = createApiClient(distantUrl)
 
 		const { correspondenceInitID, correspondenceInitPublicKeyJWK } =
@@ -39,27 +39,20 @@ export const CorrespondenceCodeInput = ({ displayNameMK, displayNameMKIV }: Corr
 				correspondenceCode: correspondenceCode(),
 			})
 
+		const correspondenceInitPublicKey = expectOk(await importKeyFromTRPC(correspondenceInitPublicKeyJWK, 'asymPub'))
+
 		setStatus('Generating a correspondence key...')
 
-		const rawCorrespondencePublicKey = expectOk(
-			parseJWK(correspondenceInitPublicKeyJWK),
-			'Failed to parse correspondence public key',
-		)
-
-		const pubKey = expectOk(
-			await fallible(() => importKey(rawCorrespondencePublicKey, 'asymPub')),
-			'Failed to import correspondence public key',
-		)
-
-		const correspondenceKeyJWK = textToBuffer(await exportKey(await generateSymmetricKey()))
+		const correspondenceKey = await generateSymmetricKey()
+		const correspondenceKeyJWK = textToBuffer(await exportKey(correspondenceKey))
 
 		setStatus('Answering the correspondence request...')
 
 		await trpc.correspondenceRequest.individuals.createAnswered.mutate({
 			correspondenceInitID,
 			correspondenceKeyMK: await encryptSymForTRPC(correspondenceKeyJWK, masterKey),
-			correspondenceKeyCIPK: serializeBuffer(await encryptAsym(correspondenceKeyJWK, pubKey)),
-			displayNameCK: await encryptSymForTRPC(displayName, masterKey),
+			correspondenceKeyCIPK: serializeBuffer(await encryptAsym(correspondenceKeyJWK, correspondenceInitPublicKey)),
+			displayNameCK: await encryptTextSymForTRPC(displayName, correspondenceKey),
 			serverUrl: distantUrl,
 		})
 

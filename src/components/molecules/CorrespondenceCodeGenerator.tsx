@@ -1,7 +1,6 @@
 import { createSignal } from 'solid-js'
 import { exportKey, generateAsymmetricKeyPair } from '../../common/crypto'
-import { encryptSymForTRPC } from '../../common/crypto-trpc'
-import { textToBuffer } from '../../common/utils'
+import { encryptTextSymForTRPC } from '../../common/crypto-trpc'
 import { expectMasterKey } from '../../state'
 import { trpc } from '../../trpc-client'
 
@@ -15,10 +14,7 @@ export const CorrespondenceCodeGenerator = () => {
 
 		const { correspondenceCode } = await trpc.correspondenceRequest.individuals.generateCode.mutate({
 			correspondenceInitPublicKeyJWK: await exportKey(publicKey),
-			correspondenceInitPrivateKeyMK: await encryptSymForTRPC(
-				textToBuffer(await exportKey(privateKey)),
-				await expectMasterKey(),
-			),
+			correspondenceInitPrivateKeyMK: await encryptTextSymForTRPC(await exportKey(privateKey), await expectMasterKey()),
 		})
 
 		setResult(correspondenceCode)
