@@ -9,6 +9,9 @@ import correspondenceRequest from './modules/correspondence-request'
 import correspondents from './modules/correspondents'
 import server from './modules/server'
 
+// Ensure the configuration will be parsed for error reporting
+import './config'
+
 export const appRouter = createRouter({
 	auth,
 	users,
