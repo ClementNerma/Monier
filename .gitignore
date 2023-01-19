@@ -24,3 +24,4 @@ pnpm-debug.log*
 
 # Development files
 _dev/
+*.db-journal
