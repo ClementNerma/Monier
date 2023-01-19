@@ -1,8 +1,5 @@
 import { createSignal, onMount, Show } from 'solid-js'
-import { deserializeBuffer } from '../../common/base64'
-import { decryptSym } from '../../common/crypto'
 import { decryptTextSymFromTRPC, importKeyFromTRPC } from '../../common/crypto-trpc'
-import { bufferToText } from '../../common/utils'
 import { expectMasterKey, importedMKKeys } from '../../state'
 import { ErrorMessage } from './ErrorMessage'
 
@@ -22,12 +19,19 @@ export type DecryptPropsKey =
 	// JWK symmetryc key encrypted with the Master Key
 	| { with: 'jwkMK'; content: string; iv: string }
 
-export const Decrypt = (props: DecryptProps) => {
+export const Decrypt = ({ data, iv, decrypt }: DecryptProps) => {
 	const [error, setError] = createSignal('')
 	const [result, setResult] = createSignal('')
 
 	onMount(async () => {
-		const result = await tryTextDecryption(props)
+		const key = await getKey(decrypt)
+
+		if (key instanceof Error) {
+			setError(key.message)
+			return
+		}
+
+		const result = await decryptTextSymFromTRPC(data, iv, key)
 
 		if (result instanceof Error) {
 			setError(result.message)
@@ -84,38 +88,4 @@ async function getKey(key: DecryptPropsKey): Promise<CryptoKey | Error> {
 	}
 
 	return imported
-}
-
-export async function tryTextDecryption({ data, decrypt, iv }: DecryptProps): Promise<string | Error> {
-	const finalKey = await getKey(decrypt)
-
-	if (finalKey instanceof Error) {
-		return finalKey
-	}
-
-	const encrypted = deserializeBuffer(data)
-
-	if (encrypted instanceof Error) {
-		return new Error('Failed to deserialize the data buffer')
-	}
-
-	const ivBuffer = deserializeBuffer(iv)
-
-	if (ivBuffer instanceof Error) {
-		return new Error('Failed to deserialize the IV buffer')
-	}
-
-	const decrypted = await decryptSym(encrypted, ivBuffer, finalKey)
-
-	if (decrypted instanceof Error) {
-		return new Error(`Failed to decrypt the provided content${decrypted.message}`)
-	}
-
-	const plainText = bufferToText(decrypted)
-
-	if (plainText instanceof Error) {
-		return new Error('Failed to decode the decrypted content as text')
-	}
-
-	return plainText
 }
