@@ -1,52 +1,31 @@
 import type { inferRouterOutputs } from '@trpc/server'
 import { createResource, Show } from 'solid-js'
-import { exportKey } from '../../common/crypto'
-import {
-	decryptTextAsymFromTRPC,
-	decryptTextSymFromTRPC,
-	encryptTextSymForTRPC,
-	importKeyFromTRPC,
-} from '../../common/crypto-trpc'
+import { decryptTextSymFromTRPC, importKeyFromTRPC } from '../../common/crypto-trpc'
 import { expectOk } from '../../common/utils'
 import type { AppRouter } from '../../server'
 import { expectMasterKey } from '../../state'
 import { trpc } from '../../trpc-client'
 import { ErrorMessage } from '../atom/ErrorMessage'
 
-type EncryptedRequests = inferRouterOutputs<AppRouter>['correspondenceRequest']['individuals']['pendingFilledRequests']
+type EncryptedRequests =
+	inferRouterOutputs<AppRouter>['correspondenceRequest']['individuals']['pendingFullyFilledRequests']
 
-export type PendingFilledCorrespondenceRequestsProps = {
+type EncryptedRequest = EncryptedRequests[number]
+
+export type PendingFullyFilledCorrespondenceRequestsProps = {
 	encryptedRequests: EncryptedRequests
 }
 
-export const PendingFilledCorrespondenceRequests = ({
+export const PendingFullyFilledCorrespondenceRequests = ({
 	encryptedRequests,
-}: PendingFilledCorrespondenceRequestsProps) => {
-	type RequestEntry = {
-		req: EncryptedRequests[number]
-		displayName: string
-		correspondenceKey: CryptoKey
-	}
-
+}: PendingFullyFilledCorrespondenceRequestsProps) => {
 	const [requests, { refetch }] = createResource(() =>
 		Promise.allSettled(
-			encryptedRequests.map(async (req): Promise<RequestEntry> => {
+			encryptedRequests.map(async (req) => {
 				const masterKey = await expectMasterKey()
 
-				const correspondenceInitPrivateKeyJWK = expectOk(
-					await decryptTextSymFromTRPC(
-						req.from.correspondenceInitPrivateKeyMK,
-						req.from.correspondenceInitPrivateKeyMKIV,
-						masterKey,
-					),
-				)
-
-				const correspondenceInitPrivateKey = expectOk(
-					await importKeyFromTRPC(correspondenceInitPrivateKeyJWK, 'asymPriv'),
-				)
-
 				const correspondenceKeyJWK = expectOk(
-					await decryptTextAsymFromTRPC(req.correspondenceKeyCIPK, correspondenceInitPrivateKey),
+					await decryptTextSymFromTRPC(req.from.correspondenceKeyMK, req.from.correspondenceKeyMKIV, masterKey),
 				)
 
 				const correspondenceKey = expectOk(await importKeyFromTRPC(correspondenceKeyJWK, 'sym', true))
@@ -60,13 +39,9 @@ export const PendingFilledCorrespondenceRequests = ({
 		),
 	)
 
-	async function answerRequest({ displayName, req, correspondenceKey }: RequestEntry) {
-		const masterKey = await expectMasterKey()
-
-		await trpc.correspondenceRequest.individuals.answerFilledRequest.mutate({
+	async function answerRequest(req: EncryptedRequest) {
+		await trpc.correspondenceRequest.individuals.markAcceptedRequest.mutate({
 			correspondenceInitID: req.from.correspondenceInitID,
-			correspondenceKeyMK: await encryptTextSymForTRPC(await exportKey(correspondenceKey), masterKey),
-			userDisplayNameCK: await encryptTextSymForTRPC(displayName, correspondenceKey),
 		})
 
 		alert('Success!')
@@ -106,7 +81,7 @@ export const PendingFilledCorrespondenceRequests = ({
 								<tr>
 									<td>{request.value.displayName}</td>
 									<td>
-										<button onClick={() => answerRequest(request.value)}>Confirm</button>
+										<button onClick={() => answerRequest(request.value.req)}>Confirm</button>
 									</td>
 								</tr>
 							),
