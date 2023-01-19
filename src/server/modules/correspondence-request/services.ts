@@ -84,11 +84,14 @@ export default createRouter({
 				})
 			}
 
+			const incomingAccessToken = generateRandomUUID()
+
 			const correspondent = await ctx.db.correspondent.create({
 				data: {
 					forUserId: ctx.viewer.id,
 
-					accessToken: generateRandomUUID(),
+					incomingAccessToken,
+					outgoingAccessToken: generateRandomUUID(),
 
 					isService: true,
 					isInitiator: false,
@@ -102,6 +105,7 @@ export default createRouter({
 
 			return {
 				correspondentId: correspondent.id,
+				incomingAccessToken,
 			}
 		}),
 })
