@@ -1,4 +1,4 @@
-import { createSignal } from 'solid-js'
+import { createSignal, Show } from 'solid-js'
 import { deserializeBuffer, serializeBuffer } from '../../common/base64'
 import {
 	decryptSym,
@@ -22,8 +22,11 @@ export type CorrespondenceCodeInputProps = {
 export const CorrespondenceCodeInput = ({ displayNameMK, displayNameMKIV }: CorrespondenceCodeInputProps) => {
 	const [correspondenceCode, setCorrespondenceCode] = createSignal('')
 	const [serverUrl, setServerUrl] = createSignal(location.origin)
+	const [status, setStatus] = createSignal('')
 
 	async function submit() {
+		setStatus('Contacting distant server...')
+
 		const distantUrl = serverUrl()
 
 		const masterKey = await expectMasterKey()
@@ -43,6 +46,8 @@ export const CorrespondenceCodeInput = ({ displayNameMK, displayNameMKIV }: Corr
 				correspondenceCode: correspondenceCode(),
 			})
 
+		setStatus('Generating a correspondence key...')
+
 		const rawCorrespondencePublicKey = expectOk(
 			parseJWK(correspondenceInitPublicKeyJWK),
 			'Failed to parse correspondence public key',
@@ -55,6 +60,8 @@ export const CorrespondenceCodeInput = ({ displayNameMK, displayNameMKIV }: Corr
 
 		const correspondenceKeyJWK = textToBuffer(await exportKey(await generateSymmetricKey()))
 
+		setStatus('Answering the correspondence request...')
+
 		await trpc.correspondenceRequest.individuals.createAnswered.mutate({
 			correspondenceInitID,
 			correspondenceKeyMK: await encryptSymForTRPC(correspondenceKeyJWK, masterKey),
@@ -63,14 +70,17 @@ export const CorrespondenceCodeInput = ({ displayNameMK, displayNameMKIV }: Corr
 			serverUrl: distantUrl,
 		})
 
-		alert('Sent successfully!')
-
 		setCorrespondenceCode('')
 		setServerUrl('')
+		setStatus('Success!')
 	}
 
 	return (
 		<form onSubmit={(e) => e.preventDefault()}>
+			<Show when={status()}>
+				<p>{status()}</p>
+			</Show>
+
 			<label>Correspondence code :</label>{' '}
 			<input
 				type="text"
