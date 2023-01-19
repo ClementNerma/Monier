@@ -57,7 +57,7 @@ export const publicProcedure = baseProcedure
 export const maybeAuthProcedure = publicProcedure.use(maybeAuthMiddleware)
 export const authProcedure = maybeAuthProcedure.use(async ({ ctx, next }) => {
 	if (ctx.session === null) {
-		throw new TRPCError({ code: 'UNAUTHORIZED', message: '' })
+		throw new TRPCError({ code: 'UNAUTHORIZED', message: 'You must be logged in to use this procedure' })
 	}
 
 	return next({
