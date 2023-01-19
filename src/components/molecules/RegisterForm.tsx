@@ -40,7 +40,7 @@ export const RegisterForm = () => {
 	}
 
 	return (
-		<form onSubmit={(e) => e.preventDefault}>
+		<form onSubmit={(e) => e.preventDefault()}>
 			<input
 				type="text"
 				placeholder="Username"
