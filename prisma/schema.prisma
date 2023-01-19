@@ -39,6 +39,7 @@ model User {
   individualLv2BCorrespondenceRequests IndividualLv2BCorrespondenceRequest[]
   individualLv2ACorrespondenceRequests IndividualLv2ACorrespondenceRequest[]
   individualLv3ACorrespondenceRequests IndividualLv3ACorrespondenceRequest[]
+  individualLv3BCorrespondenceRequests IndividualLv3BCorrespondenceRequest[]
 }
 
 model ServiceCorrespondenceRequest {
@@ -75,7 +76,7 @@ model IndividualLv2BCorrespondenceRequest {
   forUser   User   @relation(fields: [forUserId], references: [id], onDelete: Cascade)
   forUserId String
 
-  from   IndividualLv1BCorrespondenceRequest @relation(fields: [fromId], references: [id])
+  from   IndividualLv1BCorrespondenceRequest @relation(fields: [fromId], references: [id], onDelete: Cascade)
   fromId String                              @unique
 
   serverUrl String
@@ -84,6 +85,20 @@ model IndividualLv2BCorrespondenceRequest {
   userDisplayNameCKIV String
 
   correspondenceKeyCIPK String
+
+  into IndividualLv3BCorrespondenceRequest?
+}
+
+model IndividualLv3BCorrespondenceRequest {
+  id        String @id @default(uuid())
+  forUser   User   @relation(fields: [forUserId], references: [id], onDelete: Cascade)
+  forUserId String
+
+  from   IndividualLv2BCorrespondenceRequest @relation(fields: [fromId], references: [id], onDelete: Cascade)
+  fromId String                              @unique
+
+  correspondenceKeyMK   String
+  correspondenceKeyMKIV String
 }
 
 model IndividualLv2ACorrespondenceRequest {

@@ -139,7 +139,6 @@ export default createRouter({
 	pendingFilledRequests: authProcedure.query(({ ctx }) =>
 		ctx.db.individualLv2BCorrespondenceRequest.findMany({
 			select: {
-				id: true,
 				userDisplayNameCK: true,
 				userDisplayNameCKIV: true,
 				// Here we return the correspondence key encrypted with a public key...
@@ -149,6 +148,8 @@ export default createRouter({
 						// ...that couples with this private key!
 						correspondenceInitPrivateKeyMK: true,
 						correspondenceInitPrivateKeyMKIV: true,
+
+						correspondenceInitID: true,
 					},
 				},
 			},
@@ -158,8 +159,59 @@ export default createRouter({
 		}),
 	),
 
-	// From initiator (client) to target (server)
-	answerFilledRequest: publicProcedure
+	// From initiator (client) to initiator (server)
+	answerFilledRequest: authProcedure
+		.input(
+			z.object({
+				correspondenceInitID: z.string(),
+				correspondenceKeyMK: zSymEncrypted,
+				userDisplayNameCK: zSymEncrypted,
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const base = await ctx.db.individualLv1BCorrespondenceRequest.findUnique({
+				where: { correspondenceInitID: input.correspondenceInitID },
+				include: { into: true },
+			})
+
+			if (!base) {
+				throw new TRPCError({ code: 'NOT_FOUND', message: 'The provided correspondence init. ID was not found' })
+			}
+
+			if (base.forUserId !== ctx.viewer.id) {
+				throw new TRPCError({ code: 'FORBIDDEN', message: 'This correspondence init. request belongs to another user' })
+			}
+
+			if (!base.into) {
+				throw new TRPCError({
+					code: 'PRECONDITION_FAILED',
+					message: 'This correspondence request is not advanced enough to perform this operation',
+				})
+			}
+
+			const { into } = base
+
+			await ctx.db.$transaction(async (db) => {
+				await db.individualLv3BCorrespondenceRequest.create({
+					data: {
+						fromId: into.id,
+						forUserId: ctx.viewer.id,
+						correspondenceKeyMK: input.correspondenceKeyMK.content,
+						correspondenceKeyMKIV: input.correspondenceKeyMK.iv,
+					},
+				})
+
+				const distantApi = createApiClient(into.serverUrl)
+
+				await distantApi.correspondenceRequest.individuals.receiveFilledRequestAnswer.mutate({
+					correspondenceInitID: input.correspondenceInitID,
+					userDisplayNameCK: input.userDisplayNameCK,
+				})
+			})
+		}),
+
+	// From initiator (server) to target (server)
+	receiveFilledRequestAnswer: publicProcedure
 		.input(
 			z.object({
 				correspondenceInitID: z.string(),
@@ -234,7 +286,10 @@ export default createRouter({
 			}
 
 			if (!base.into) {
-				throw new TRPCError({ code: 'BAD_REQUEST', message: 'The provided correspondence is not at this stage yet' })
+				throw new TRPCError({
+					code: 'BAD_REQUEST',
+					message: 'This correspondence request is not advanced enough to perform this operation',
+				})
 			}
 
 			const accessToken = generateRandomUUID()
@@ -287,9 +342,7 @@ export default createRouter({
 				where: {
 					correspondenceInitID: input.correspondenceInitID,
 				},
-				include: {
-					into: true,
-				},
+				include: { into: { include: { into: true } } },
 			})
 
 			if (base === null) {
@@ -297,13 +350,23 @@ export default createRouter({
 			}
 
 			if (!base.into) {
-				throw new TRPCError({ code: 'BAD_REQUEST', message: 'The provided correspondence is not at this stage yet' })
+				throw new TRPCError({
+					code: 'PRECONDITION_FAILED',
+					message: 'This correspondence request is not advanced enough to perform this operation',
+				})
+			}
+
+			if (!base.into.into) {
+				throw new TRPCError({
+					code: 'PRECONDITION_FAILED',
+					message: 'This correspondence request is not advanced enough to perform this operation',
+				})
 			}
 
 			await ctx.db.$transaction([
-				ctx.db.individualLv2BCorrespondenceRequest.delete({
+				ctx.db.individualLv3BCorrespondenceRequest.delete({
 					where: {
-						id: base.into.id,
+						id: base.into.into.id,
 					},
 				}),
 				ctx.db.correspondent.create({
@@ -315,9 +378,8 @@ export default createRouter({
 
 						accessToken: input.accessToken,
 
-						// TODO: correspondenceKeyMK + MKIV
-						correspondenceKeyMK: 'TODO',
-						correspondenceKeyMKIV: 'TODO',
+						correspondenceKeyMK: base.into.into.correspondenceKeyMK,
+						correspondenceKeyMKIV: base.into.into.correspondenceKeyMKIV,
 
 						userDisplayNameCK: base.into.userDisplayNameCK,
 						userDisplayNameCKIV: base.into.userDisplayNameCKIV,
