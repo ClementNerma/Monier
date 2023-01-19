@@ -8,6 +8,7 @@ import users from './modules/users'
 import correspondenceRequest from './modules/correspondence-request'
 import correspondents from './modules/correspondents'
 import server from './modules/server'
+import { createTRPCProxyClient, httpBatchLink } from '@trpc/client'
 
 export const appRouter = createRouter({
 	auth,
@@ -30,3 +31,13 @@ export const requestHandler = (req: Request) =>
 		req,
 		createContext,
 	})
+
+export function createApiClient(url: string) {
+	return createTRPCProxyClient<AppRouter>({
+		links: [
+			httpBatchLink({
+				url: `${url}/trpc`,
+			}),
+		],
+	})
+}

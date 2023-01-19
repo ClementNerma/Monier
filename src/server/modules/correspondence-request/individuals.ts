@@ -1,6 +1,7 @@
 import type { IndividualLv1BCorrespondenceRequest } from '@prisma/client'
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
+import { createApiClient } from '../..'
 import { generateRandomUUID } from '../../../common/crypto'
 import { pick } from '../../../common/utils'
 import { createRouter } from '../../router'
@@ -87,8 +88,14 @@ export default createRouter({
 					},
 				})
 
-				// TODO: make request to initiator (server) with the provided arguments
-				// In case of failure, the transaction will be aborted
+				const distantApi = createApiClient(input.serverUrl)
+
+				await distantApi.correspondenceRequest.individuals.fillInfos.mutate({
+					correspondenceInitID: input.correspondenceInitID,
+					correspondenceKeyCIPK: input.correspondenceKeyCIPK,
+					displayNameCK: input.displayNameCK,
+					serverUrl: 'TODO', // Current server's URL
+				})
 			})
 		}),
 
@@ -257,8 +264,12 @@ export default createRouter({
 					},
 				})
 
-				// TODO: contact initiator's server (method: fullyAcceptRequest)
-				// In case of failure, the whole transaction will be destroyed
+				const distantApi = createApiClient(base.serverUrl)
+
+				await distantApi.correspondenceRequest.individuals.fullyAcceptRequest.mutate({
+					correspondenceInitID: base.correspondenceInitID,
+					accessToken,
+				})
 			})
 		}),
 
