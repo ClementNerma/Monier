@@ -139,9 +139,13 @@ export async function importSymKey(key: JsonWebKey, exportable = false): Promise
 }
 
 export async function importAsymPublicKey(key: JsonWebKey, exportable = false): Promise<CryptoKey | Error> {
-	return await crypto.subtle.importKey('jwk', key, { name: CONSTANTS.asymmetricalEncryptionAlgorithm }, exportable, [
-		'encrypt',
-	])
+	return await crypto.subtle.importKey(
+		'jwk',
+		key,
+		{ name: CONSTANTS.asymmetricalEncryptionAlgorithm, hash: CONSTANTS.hashAlgorithm },
+		exportable,
+		['encrypt'],
+	)
 }
 
 export async function exportKey(key: CryptoKey): Promise<string> {
