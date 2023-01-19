@@ -32,7 +32,7 @@ export async function getSession(
 	}
 
 	// Cancel sessions after they expire
-	if (Date.now() > session.createdAt.getTime() + CONFIG.SESSION_EXPIRES_AFTER_HOURS * 3600) {
+	if (Date.now() > session.createdAt.getTime() + CONFIG.SESSION_EXPIRES_AFTER_HOURS * 3600 * 1000) {
 		await db.session.delete({ where: { id: session.id } })
 
 		return null
