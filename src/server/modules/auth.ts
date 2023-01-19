@@ -4,6 +4,7 @@ import type { AstroCookies } from 'astro/dist/core/cookies'
 import { CONSTANTS } from '../../common/constants'
 import { getCookie } from '../../common/cookies'
 import { map, pick } from '../../common/utils'
+import { CONFIG } from '../config'
 import type { Context } from '../context'
 import { baseProcedure, createMiddleware, createRouter } from '../router'
 
@@ -22,19 +23,20 @@ export async function getSession(
 	}
 
 	const session = await db.session.findUnique({
-		include: {
-			user: true,
-		},
-		where: {
-			accessToken,
-		},
+		include: { user: true },
+		where: { accessToken },
 	})
 
 	if (!session) {
 		return null
 	}
 
-	// TODO: invalidate sessions after expiration date
+	// Cancel sessions after they expire
+	if (Date.now() > session.createdAt.getTime() + CONFIG.SESSION_EXPIRES_AFTER_HOURS * 3600) {
+		await db.session.delete({ where: { id: session.id } })
+
+		return null
+	}
 
 	return session
 }
