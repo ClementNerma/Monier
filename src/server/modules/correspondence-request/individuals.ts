@@ -160,6 +160,7 @@ export default createRouter({
 			},
 			where: {
 				forUserId: ctx.viewer.id,
+				into: null,
 			},
 		}),
 	),
