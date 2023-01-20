@@ -93,8 +93,6 @@ model IndividualLv3BCorrespondenceRequest {
   forUser   User   @relation(fields: [forUserId], references: [id], onDelete: Cascade)
   forUserId String
 
-  fulfilled Boolean
-
   from   IndividualLv2BCorrespondenceRequest @relation(fields: [fromId], references: [id], onDelete: Cascade)
   fromId String                              @unique
 
@@ -106,8 +104,6 @@ model IndividualLv2ACorrespondenceRequest {
   id        String @id @default(uuid())
   forUser   User   @relation(fields: [forUserId], references: [id], onDelete: Cascade)
   forUserId String
-
-  fulfilled Boolean
 
   serverUrl String
 

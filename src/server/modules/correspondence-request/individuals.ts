@@ -2,7 +2,7 @@ import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import { createApiClient } from '../../../common/trpc-client'
 import { generateRandomUUID } from '../../../common/crypto'
-import { pick } from '../../../common/utils'
+import { fallible, pick } from '../../../common/utils'
 import { createRouter } from '../../router'
 import { zSymEncrypted } from '../../types'
 import { authProcedure, publicProcedure } from '../auth'
@@ -73,14 +73,9 @@ export default createRouter({
 			}),
 		)
 		.mutation<void>(async ({ ctx, input }) => {
-			await ctx.db.individualLv2ACorrespondenceRequest.deleteMany({
-				where: { correspondenceInitID: input.correspondenceInitID, fulfilled: false },
-			})
-
 			const { id } = await ctx.db.individualLv2ACorrespondenceRequest.create({
 				data: {
 					forUserId: ctx.viewer.id,
-					fulfilled: false,
 
 					correspondenceInitID: input.correspondenceInitID,
 					correspondenceKeyMK: input.correspondenceKeyMK.content,
@@ -92,17 +87,22 @@ export default createRouter({
 
 			const distantApi = createApiClient(input.serverUrl)
 
-			await distantApi.correspondenceRequest.individuals.fillInfos.mutate({
-				correspondenceInitID: input.correspondenceInitID,
-				correspondenceKeyCIPK: input.correspondenceKeyCIPK,
-				displayNameCK: input.displayNameCK,
-				serverUrl: CONFIG.CURRENT_SERVER_URL,
-			})
+			const result = await fallible(() =>
+				distantApi.correspondenceRequest.individuals.fillInfos.mutate({
+					correspondenceInitID: input.correspondenceInitID,
+					correspondenceKeyCIPK: input.correspondenceKeyCIPK,
+					displayNameCK: input.displayNameCK,
+					serverUrl: CONFIG.CURRENT_SERVER_URL,
+				}),
+			)
 
-			await ctx.db.individualLv2ACorrespondenceRequest.update({
-				data: { fulfilled: true },
-				where: { id },
-			})
+			if (result instanceof Error) {
+				await ctx.db.individualLv2ACorrespondenceRequest.delete({
+					where: { id },
+				})
+
+				throw result
+			}
 		}),
 
 	// From target (server) to initiator (server)
@@ -197,15 +197,10 @@ export default createRouter({
 
 			const { into } = base
 
-			await ctx.db.individualLv3BCorrespondenceRequest.deleteMany({
-				where: { fromId: into.id, fulfilled: false },
-			})
-
 			const { id } = await ctx.db.individualLv3BCorrespondenceRequest.create({
 				data: {
 					fromId: into.id,
 					forUserId: ctx.viewer.id,
-					fulfilled: false,
 
 					correspondenceKeyMK: input.correspondenceKeyMK.content,
 					correspondenceKeyMKIV: input.correspondenceKeyMK.iv,
@@ -214,15 +209,20 @@ export default createRouter({
 
 			const distantApi = createApiClient(into.serverUrl)
 
-			await distantApi.correspondenceRequest.individuals.receiveFilledRequestAnswer.mutate({
-				correspondenceInitID: input.correspondenceInitID,
-				userDisplayNameCK: input.userDisplayNameCK,
-			})
+			const result = await fallible(() =>
+				distantApi.correspondenceRequest.individuals.receiveFilledRequestAnswer.mutate({
+					correspondenceInitID: input.correspondenceInitID,
+					userDisplayNameCK: input.userDisplayNameCK,
+				}),
+			)
 
-			await ctx.db.individualLv3BCorrespondenceRequest.update({
-				data: { fulfilled: true },
-				where: { id },
-			})
+			if (result instanceof Error) {
+				await ctx.db.individualLv3BCorrespondenceRequest.delete({
+					where: { id },
+				})
+
+				throw result
+			}
 		}),
 
 	// From initiator (server) to target (server)
