@@ -319,9 +319,10 @@ export default createRouter({
 			})
 
 			await ctx.db.$transaction([
-				ctx.db.individualLv3ACorrespondenceRequest.delete({
+				// Will delete the 3A by cascade
+				ctx.db.individualLv2ACorrespondenceRequest.delete({
 					where: {
-						id: into.id,
+						id: base.id,
 					},
 				}),
 
@@ -381,9 +382,10 @@ export default createRouter({
 			}
 
 			await ctx.db.$transaction([
-				ctx.db.individualLv3BCorrespondenceRequest.delete({
+				// Will delete the 2B and 3B by cascade
+				ctx.db.individualLv1BCorrespondenceRequest.delete({
 					where: {
-						id: base.into.into.id,
+						id: base.id,
 					},
 				}),
 				ctx.db.correspondent.create({
