@@ -5,6 +5,7 @@ import { map } from '../../common/utils'
 import { createRouter } from '../router'
 import { zSymEncrypted } from '../types'
 import { publicProcedure } from './auth'
+import { correspondentAuth } from './correspondents'
 
 export default createRouter({
 	// From sender (server) to recipient (server)
@@ -21,13 +22,7 @@ export default createRouter({
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
-			const correspondent = await ctx.db.correspondent.findUnique({
-				where: { incomingAccessToken: input.accessToken },
-			})
-
-			if (!correspondent) {
-				throw new TRPCError({ code: 'FORBIDDEN', message: 'The provided accessToken was not found' })
-			}
+			const correspondent = await correspondentAuth(ctx.db, input.accessToken)
 
 			const exchangePromise =
 				map(input.exchangeId, async (exchangeId) => {
