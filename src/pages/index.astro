@@ -6,7 +6,7 @@ import { serverApp } from "../server";
 import CorrespondenceCodeGenerator from "../components/molecules/CorrespondenceCodeGenerator.vue";
 import CorrespondenceCodeInput from "../components/molecules/CorrespondenceCodeInput.vue";
 import PendingFilledCorrespondenceRequests from "../components/molecules/PendingFilledCorrespondenceRequests.vue";
-import PendingFullyFilledCorrespondenceRequests from "../components/molecules/PendingFullyFilledCorrespondenceRequests.vue"
+import PendingFullyFilledCorrespondenceRequests from "../components/molecules/PendingFullyFilledCorrespondenceRequests.vue";
 
 const app = await serverApp(Astro);
 const viewer = await app.server.viewer();
@@ -16,6 +16,7 @@ if (!viewer) {
 }
 
 const data = await parallel({
+  messages: app.exchanges.listMessages(),
   correspondents: app.correspondents.list(),
   pendingFilledCorrespondenceRequests:
     app.correspondenceRequest.individuals.pendingFilledRequests(),
@@ -34,6 +35,34 @@ const data = await parallel({
         decrypt={{ with: "masterKey" }}
       />
     </h2>
+
+    <div class="container">
+      <table>
+        <tbody>
+          {
+            data.messages.map((message) => (
+              <tr>
+                <td>
+                  {message.isImportant && <strong>[IMPORTANT]</strong>}
+                  <Decrypt
+                    client:only
+                    data={message.titleCK}
+                    iv={message.titleCKIV}
+                    decrypt={{
+                      with: "jwkMK",
+                      content:
+                        message.exchange.correspondent.correspondenceKeyMK,
+                      iv: message.exchange.correspondent.correspondenceKeyMKIV,
+                    }}
+                  />
+                </td>
+                <td>{message.createdAt}</td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
 
     <div class="container">
       <h3>Correspondents</h3>
