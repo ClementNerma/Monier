@@ -8,9 +8,11 @@ import { trpc } from '../../trpc-client';
 const result = ref('')
 
 async function generate() {
-	result.value = 'Loading...'
+	result.value = 'Generating keys...'
 
 	const { publicKey, privateKey } = await generateAsymmetricKeyPair()
+
+	result.value = 'Generating a correspondence code...'
 
 	const { correspondenceCode } = await trpc.correspondenceRequest.individuals.generateCode.mutate({
 		correspondenceInitPublicKeyJWK: await exportKey(publicKey),
