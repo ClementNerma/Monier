@@ -58,7 +58,7 @@ export default createRouter({
 
 			const distantApi = createApiClient(correspondent.serverUrl)
 
-			await distantApi.exchanges.receiveMessage.mutate({
+			await distantApi.messages.receiveMessage.mutate({
 				accessToken: correspondent.outgoingAccessToken,
 				exchangeId: exchange.id,
 				newExchange: input.exchangeId === null,

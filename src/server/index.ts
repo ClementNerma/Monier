@@ -7,7 +7,7 @@ import auth from './modules/auth'
 import users from './modules/users'
 import correspondenceRequest from './modules/correspondence-request'
 import correspondents from './modules/correspondents'
-import exchanges from './modules/exchanges'
+import messages from './modules/messages'
 import server from './modules/server'
 
 import { CONFIG } from './config'
@@ -23,7 +23,7 @@ export const appRouter = createRouter({
 	users,
 	correspondenceRequest,
 	correspondents,
-	exchanges,
+	messages,
 
 	server,
 })

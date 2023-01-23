@@ -16,7 +16,7 @@ if (!viewer) {
 }
 
 const data = await parallel({
-  messages: app.exchanges.list(),
+  messages: app.messages.list(),
   correspondents: app.correspondents.list(),
   pendingFilledCorrespondenceRequests:
     app.correspondenceRequest.individuals.pendingFilledRequests(),
