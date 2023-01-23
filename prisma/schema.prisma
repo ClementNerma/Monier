@@ -169,8 +169,8 @@ model Exchange {
 model Message {
   id String @id @default(uuid())
 
-  exchange   Exchange? @relation(fields: [exchangeId], references: [id], onDelete: Cascade)
-  exchangeId String?
+  exchange   Exchange @relation(fields: [exchangeId], references: [id], onDelete: Cascade)
+  exchangeId String
 
   createdAt DateTime @default(now())
 
