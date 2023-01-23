@@ -4,6 +4,14 @@ import { authProcedure } from './auth'
 import type { Context } from '../context'
 import { TRPCError } from '@trpc/server'
 
+export default createRouter({
+	list: authProcedure.query<Correspondent[]>(({ ctx }) =>
+		ctx.db.correspondent.findMany({
+			where: { forUserId: ctx.viewer.id },
+		}),
+	),
+})
+
 export async function correspondentAuth(db: Context['db'], accessToken: string): Promise<Correspondent> {
 	const correspondent = await db.correspondent.findUnique({
 		where: { incomingAccessToken: accessToken },
@@ -15,11 +23,3 @@ export async function correspondentAuth(db: Context['db'], accessToken: string):
 
 	return correspondent
 }
-
-export default createRouter({
-	list: authProcedure.query<Correspondent[]>(({ ctx }) =>
-		ctx.db.correspondent.findMany({
-			where: { forUserId: ctx.viewer.id },
-		}),
-	),
-})

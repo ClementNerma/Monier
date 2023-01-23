@@ -1,69 +1,85 @@
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
 import { generateRandomUUID } from '../../common/crypto'
-import { map } from '../../common/utils'
 import { createRouter } from '../router'
 import { zSymEncrypted } from '../types'
 import { publicProcedure } from './auth'
 import { correspondentAuth } from './correspondents'
+import type { Context } from '../context'
+import type { Correspondent, Exchange, Message } from '@prisma/client'
+
+const messageInput = z.object({
+	isImportant: z.boolean(),
+	titleCK: zSymEncrypted,
+	categoryCK: zSymEncrypted,
+	bodyCK: zSymEncrypted,
+	// TODO: files
+})
 
 export default createRouter({
 	// From sender (server) to recipient (server)
 	createMessage: publicProcedure
-		.input(
-			z.object({
-				accessToken: z.string(),
-				isImportant: z.boolean(),
-				exchangeId: z.string().nullable(),
-				titleCK: zSymEncrypted,
-				categoryCK: zSymEncrypted,
-				bodyCK: zSymEncrypted,
-				// TODO: files
-			}),
-		)
+		.input(z.object({ accessToken: z.string(), exchangeId: z.string().nullable(), message: messageInput }))
 		.mutation(async ({ ctx, input }) => {
 			const correspondent = await correspondentAuth(ctx.db, input.accessToken)
 
-			const exchangePromise =
-				map(input.exchangeId, async (exchangeId) => {
-					const exchange = await ctx.db.exchange.findUnique({
-						where: { exchangeId },
-					})
-
-					if (!exchange) {
-						throw new TRPCError({ code: 'NOT_FOUND', message: 'The provided exchange ID was not found' })
-					}
-
-					if (exchange.userId !== correspondent.forUserId) {
-						throw new TRPCError({ code: 'FORBIDDEN', message: 'The provided exchange ID belongs to another user' })
-					}
-
-					return exchange
-				}) ??
-				ctx.db.exchange.create({
-					data: {
-						correspondentId: correspondent.id,
+			const exchange = await (input.exchangeId !== null
+				? getExchange(ctx.db, correspondent, {
+						exchangeId: input.exchangeId,
 						userId: correspondent.forUserId,
-						exchangeId: generateRandomUUID(),
-					},
-				})
+				  })
+				: ctx.db.exchange.create({
+						data: {
+							correspondentId: correspondent.id,
+							userId: correspondent.forUserId,
+							exchangeId: generateRandomUUID(),
+						},
+				  }))
 
-			const { exchangeId } = await exchangePromise
+			await createMessage(ctx.db, input.message, exchange)
 
-			await ctx.db.message.create({
-				data: {
-					exchangeId,
-					titleCK: input.titleCK.content,
-					titleCKIV: input.titleCK.iv,
-					categoryCK: input.categoryCK.content,
-					categoryCKIV: input.categoryCK.iv,
-					bodyCK: input.bodyCK.content,
-					bodyCKIV: input.bodyCK.iv,
-					isImportant: input.isImportant,
-					// TODO: files
-				},
-			})
-
-			return { exchangeId }
+			return { exchangeId: exchange.id }
 		}),
 })
+
+async function getExchange(
+	db: Context['db'],
+	correspondent: Correspondent,
+	ids: {
+		exchangeId: string
+		userId: string
+	},
+): Promise<Exchange> {
+	const exchange = await db.exchange.findUnique({
+		where: { exchangeId: ids.exchangeId },
+	})
+
+	if (!exchange) {
+		throw new TRPCError({ code: 'NOT_FOUND', message: 'Provided exchange was not found' })
+	}
+
+	if (exchange.userId !== ids.userId) {
+		throw new TRPCError({ code: 'FORBIDDEN', message: 'This exchange belongs to another user' })
+	}
+
+	if (exchange.correspondentId !== correspondent.id) {
+		throw new TRPCError({ code: 'FORBIDDEN', message: 'This exchange is for another correspondent' })
+	}
+
+	return exchange
+}
+
+function createMessage(db: Context['db'], input: z.infer<typeof messageInput>, exchange: Exchange): Promise<Message> {
+	return db.message.create({
+		data: {
+			exchangeId: exchange.id,
+			titleCK: input.titleCK.content,
+			titleCKIV: input.titleCK.iv,
+			categoryCK: input.categoryCK.content,
+			categoryCKIV: input.categoryCK.iv,
+			bodyCK: input.bodyCK.content,
+			bodyCKIV: input.bodyCK.iv,
+			isImportant: input.isImportant,
+		},
+	})
+}
