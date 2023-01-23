@@ -3,10 +3,10 @@ import { parallel } from "../common/utils";
 import Layout from "../Layout.astro";
 import Decrypt from "../components/atom/Decrypt.vue";
 import { serverApp } from "../server";
-import CorrespondenceCodeGenerator from "../components/molecules/CorrespondenceCodeGenerator.vue";
-import CorrespondenceCodeInput from "../components/molecules/CorrespondenceCodeInput.vue";
-import PendingFilledCorrespondenceRequests from "../components/molecules/PendingFilledCorrespondenceRequests.vue";
-import PendingFullyFilledCorrespondenceRequests from "../components/molecules/PendingFullyFilledCorrespondenceRequests.vue";
+import CorrespondenceCodeGenerator from "../components/organisms/CorrespondenceCodeGenerator.vue";
+import CorrespondenceCodeInput from "../components/organisms/CorrespondenceCodeInput.vue";
+import PendingFilledCorrespondenceRequests from "../components/organisms/PendingFilledCorrespondenceRequests.vue";
+import PendingFullyFilledCorrespondenceRequests from "../components/organisms/PendingFullyFilledCorrespondenceRequests.vue";
 
 const app = await serverApp(Astro);
 const viewer = await app.server.viewer();
