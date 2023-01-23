@@ -3,10 +3,11 @@ import { z } from 'zod'
 import { generateRandomUUID } from '../../common/crypto'
 import { createRouter } from '../router'
 import { zSymEncrypted } from '../types'
-import { publicProcedure } from './auth'
-import { correspondentAuth } from './correspondents'
+import { authProcedure, publicProcedure } from './auth'
+import { correspondentAuth, getCorrespondent } from './correspondents'
 import type { Context } from '../context'
 import type { Correspondent, Exchange, Message } from '@prisma/client'
+import { createApiClient } from '../../common/trpc-client'
 
 const messageInput = z.object({
 	isImportant: z.boolean(),
@@ -17,23 +18,75 @@ const messageInput = z.object({
 })
 
 export default createRouter({
-	// From sender (server) to recipient (server)
-	createMessage: publicProcedure
-		.input(z.object({ accessToken: z.string(), exchangeId: z.string().nullable(), message: messageInput }))
-		.mutation(async ({ ctx, input }) => {
-			const correspondent = await correspondentAuth(ctx.db, input.accessToken)
+	listMessages: authProcedure.query(({ ctx }) =>
+		ctx.db.message.findMany({
+			where: { exchange: { userId: ctx.viewer.id } },
+			include: {
+				exchange: {
+					include: {
+						correspondent: {
+							select: {
+								correspondenceKeyMK: true,
+								correspondenceKeyMKIV: true,
+							},
+						},
+					},
+				},
+			},
+			orderBy: { createdAt: 'desc' },
+		}),
+	),
 
-			const exchange = await (input.exchangeId !== null
-				? getExchange(ctx.db, correspondent, {
-						exchangeId: input.exchangeId,
-						userId: correspondent.forUserId,
-				  })
-				: ctx.db.exchange.create({
+	// From sender (client) to sender (server)
+	sendMessage: authProcedure
+		.input(z.object({ correspondentId: z.string(), exchangeId: z.string().nullable(), message: messageInput }))
+		.mutation(async ({ ctx, input }) => {
+			const correspondent = await getCorrespondent(ctx.db, input.correspondentId, ctx.viewer)
+
+			const exchange = await (input.exchangeId === null
+				? ctx.db.exchange.create({
 						data: {
 							correspondentId: correspondent.id,
 							userId: correspondent.forUserId,
 							exchangeId: generateRandomUUID(),
 						},
+				  })
+				: getExchange(ctx.db, correspondent, {
+						exchangeId: input.exchangeId,
+						userId: correspondent.forUserId,
+				  }))
+
+			const distantApi = createApiClient(correspondent.serverUrl)
+
+			await distantApi.exchanges.receiveMessage.mutate({
+				accessToken: correspondent.outgoingAccessToken,
+				exchangeId: exchange.id,
+				newExchange: input.exchangeId === null,
+				message: input.message,
+			})
+
+			await createMessage(ctx.db, input.message, exchange)
+		}),
+
+	// From sender (server) to recipient (server)
+	receiveMessage: publicProcedure
+		.input(
+			z.object({ accessToken: z.string(), exchangeId: z.string(), newExchange: z.boolean(), message: messageInput }),
+		)
+		.mutation(async ({ ctx, input }) => {
+			const correspondent = await correspondentAuth(ctx.db, input.accessToken)
+
+			const exchange = await (input.newExchange
+				? ctx.db.exchange.create({
+						data: {
+							correspondentId: correspondent.id,
+							userId: correspondent.forUserId,
+							exchangeId: generateRandomUUID(),
+						},
+				  })
+				: getExchange(ctx.db, correspondent, {
+						exchangeId: input.exchangeId,
+						userId: correspondent.forUserId,
 				  }))
 
 			await createMessage(ctx.db, input.message, exchange)
