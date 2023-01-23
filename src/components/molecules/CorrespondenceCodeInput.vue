@@ -47,7 +47,7 @@ async function submit() {
 		correspondenceInitID,
 		correspondenceKeyMK: await encryptSymForTRPC(correspondenceKeyJWK, masterKey),
 		correspondenceKeyCIPK: serializeBuffer(await encryptAsym(correspondenceKeyJWK, correspondenceInitPublicKey)),
-		displayNameCK: await encryptTextSymForTRPC(displayName, correspondenceKey),
+		targetDisplayNameCK: await encryptTextSymForTRPC(displayName, correspondenceKey),
 		serverUrl: distantUrl,
 	})
 

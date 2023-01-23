@@ -19,15 +19,16 @@ type EncryptedRequest = EncryptedRequests[number]
 
 type RequestEntry = {
     req: EncryptedRequest
-    displayName: string
+    initiatorDisplayName: string
     correspondenceKey: CryptoKey
 }
 
-function fetch() {
-    // TODO: actual refetch
+async function fetch(reload: boolean) {
+    const requests = reload ? await trpc.correspondenceRequest.individuals.pendingFullyFilledRequests.query() : props.encryptedRequests
 
+    // TODO: actual refetch
     return Promise.allSettled(
-        props.encryptedRequests.map(async (req): Promise<RequestEntry> => {
+        requests.map(async (req): Promise<RequestEntry> => {
             const masterKey = await expectMasterKey()
 
             const correspondenceKeyJWK = expectOk(
@@ -36,29 +37,33 @@ function fetch() {
 
             const correspondenceKey = expectOk(await importKeyFromTRPC(correspondenceKeyJWK, 'sym', true))
 
-            const displayName = expectOk(
-                await decryptTextSymFromTRPC(req.userDisplayNameCK, req.userDisplayNameCKIV, correspondenceKey),
+            const initiatorDisplayName = expectOk(
+                await decryptTextSymFromTRPC(req.initiatorDisplayNameCK, req.initiatorDisplayNameCKIV, correspondenceKey),
             )
 
-            return { displayName, req, correspondenceKey }
+            return { initiatorDisplayName, req, correspondenceKey }
         })
     )
 }
 
 async function answerRequest(req: EncryptedRequest) {
-    await trpc.correspondenceRequest.individuals.markAcceptedRequest.mutate({
-        correspondenceInitID: req.from.correspondenceInitID,
-    })
+    try {
+        await trpc.correspondenceRequest.individuals.markAcceptedRequest.mutate({
+            correspondenceInitID: req.from.correspondenceInitID,
+        })
+    } catch (e) {
+        return alert(`Failed to confirm: ${e instanceof Error ? e.message : '<unknown error>'}`)
+    }
 
     alert('Success!')
 
-    requests.value = await fetch()
+    requests.value = await fetch(true)
 }
 
 const requests = ref<PromiseSettledResult<RequestEntry>[] | null>(null)
 
 onMounted(async () => {
-    requests.value = await fetch()
+    requests.value = await fetch(false)
 })
 </script>
 
@@ -83,7 +88,7 @@ onMounted(async () => {
                 </td>
 
                 <template v-else>
-                    <td>{{ request.value.displayName }}</td>
+                    <td>{{ request.value.initiatorDisplayName }}</td>
                     <td>
                         <button @click="() => answerRequest(request.value.req)">Confirm</button>
                     </td>

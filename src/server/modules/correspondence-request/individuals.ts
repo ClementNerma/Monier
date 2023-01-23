@@ -69,7 +69,7 @@ export default createRouter({
 				serverUrl: z.string(),
 
 				correspondenceKeyCIPK: z.string(),
-				displayNameCK: zSymEncrypted,
+				targetDisplayNameCK: zSymEncrypted,
 			}),
 		)
 		.mutation<void>(async ({ ctx, input }) => {
@@ -91,7 +91,7 @@ export default createRouter({
 				distantApi.correspondenceRequest.individuals.fillInfos.mutate({
 					correspondenceInitID: input.correspondenceInitID,
 					correspondenceKeyCIPK: input.correspondenceKeyCIPK,
-					displayNameCK: input.displayNameCK,
+					targetDisplayNameCK: input.targetDisplayNameCK,
 					serverUrl: CONFIG.CURRENT_SERVER_URL,
 				}),
 			)
@@ -112,7 +112,7 @@ export default createRouter({
 				correspondenceInitID: z.string(),
 				correspondenceKeyCIPK: z.string(),
 				serverUrl: z.string(),
-				displayNameCK: zSymEncrypted,
+				targetDisplayNameCK: zSymEncrypted,
 			}),
 		)
 		.mutation<void>(async ({ ctx, input }) => {
@@ -134,8 +134,8 @@ export default createRouter({
 					correspondenceKeyCIPK: input.correspondenceKeyCIPK,
 
 					serverUrl: input.serverUrl,
-					userDisplayNameCK: input.displayNameCK.content,
-					userDisplayNameCKIV: input.displayNameCK.iv,
+					targetDisplayNameCK: input.targetDisplayNameCK.content,
+					targetDisplayNameCKIV: input.targetDisplayNameCK.iv,
 				},
 			})
 		}),
@@ -144,8 +144,8 @@ export default createRouter({
 	pendingFilledRequests: authProcedure.query(({ ctx }) =>
 		ctx.db.individualLv2BCorrespondenceRequest.findMany({
 			select: {
-				userDisplayNameCK: true,
-				userDisplayNameCKIV: true,
+				targetDisplayNameCK: true,
+				targetDisplayNameCKIV: true,
 				// Here we return the correspondence key encrypted with a public key...
 				correspondenceKeyCIPK: true,
 				from: {
@@ -171,7 +171,7 @@ export default createRouter({
 			z.object({
 				correspondenceInitID: z.string(),
 				correspondenceKeyMK: zSymEncrypted,
-				userDisplayNameCK: zSymEncrypted,
+				initiatorDisplayNameCK: zSymEncrypted,
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -212,7 +212,7 @@ export default createRouter({
 			const result = await fallible(() =>
 				distantApi.correspondenceRequest.individuals.receiveFilledRequestAnswer.mutate({
 					correspondenceInitID: input.correspondenceInitID,
-					userDisplayNameCK: input.userDisplayNameCK,
+					initiatorDisplayNameCK: input.initiatorDisplayNameCK,
 				}),
 			)
 
@@ -230,7 +230,7 @@ export default createRouter({
 		.input(
 			z.object({
 				correspondenceInitID: z.string(),
-				userDisplayNameCK: zSymEncrypted,
+				initiatorDisplayNameCK: zSymEncrypted,
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -248,8 +248,8 @@ export default createRouter({
 				data: {
 					forUserId: request.forUserId,
 					fromId: request.id,
-					userDisplayNameCK: input.userDisplayNameCK.content,
-					userDisplayNameCKIV: input.userDisplayNameCK.iv,
+					initiatorDisplayNameCK: input.initiatorDisplayNameCK.content,
+					initiatorDisplayNameCKIV: input.initiatorDisplayNameCK.iv,
 				},
 			})
 		}),
@@ -258,8 +258,8 @@ export default createRouter({
 	pendingFullyFilledRequests: authProcedure.query(({ ctx }) =>
 		ctx.db.individualLv3ACorrespondenceRequest.findMany({
 			select: {
-				userDisplayNameCK: true,
-				userDisplayNameCKIV: true,
+				initiatorDisplayNameCK: true,
+				initiatorDisplayNameCKIV: true,
 				from: {
 					select: {
 						correspondenceInitID: true,
@@ -318,29 +318,31 @@ export default createRouter({
 				outgoingAccessToken: incomingAccessToken,
 			})
 
-			await ctx.db.individualLv3ACorrespondenceRequest.delete({
-				where: {
-					id: into.id,
-				},
-			})
+			await ctx.db.$transaction([
+				ctx.db.individualLv3ACorrespondenceRequest.delete({
+					where: {
+						id: into.id,
+					},
+				}),
 
-			await ctx.db.correspondent.create({
-				data: {
-					forUserId: ctx.viewer.id,
+				ctx.db.correspondent.create({
+					data: {
+						forUserId: ctx.viewer.id,
 
-					incomingAccessToken,
-					outgoingAccessToken,
+						incomingAccessToken,
+						outgoingAccessToken,
 
-					isInitiator: true,
-					isService: false,
+						isInitiator: true,
+						isService: false,
 
-					correspondenceKeyMK: base.correspondenceKeyMK,
-					correspondenceKeyMKIV: base.correspondenceKeyMKIV,
+						correspondenceKeyMK: base.correspondenceKeyMK,
+						correspondenceKeyMKIV: base.correspondenceKeyMKIV,
 
-					userDisplayNameCK: into.userDisplayNameCK,
-					userDisplayNameCKIV: into.userDisplayNameCKIV,
-				},
-			})
+						displayNameCK: into.initiatorDisplayNameCK,
+						displayNameCKIV: into.initiatorDisplayNameCKIV,
+					},
+				}),
+			])
 		}),
 
 	// From target (server) to initiator (server)
@@ -397,8 +399,8 @@ export default createRouter({
 						correspondenceKeyMK: base.into.into.correspondenceKeyMK,
 						correspondenceKeyMKIV: base.into.into.correspondenceKeyMKIV,
 
-						userDisplayNameCK: base.into.userDisplayNameCK,
-						userDisplayNameCKIV: base.into.userDisplayNameCKIV,
+						displayNameCK: base.into.targetDisplayNameCK,
+						displayNameCKIV: base.into.targetDisplayNameCKIV,
 					},
 				}),
 			])

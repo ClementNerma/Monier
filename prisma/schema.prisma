@@ -80,8 +80,8 @@ model IndividualLv2BCorrespondenceRequest {
 
   serverUrl String
 
-  userDisplayNameCK   String
-  userDisplayNameCKIV String
+  targetDisplayNameCK   String
+  targetDisplayNameCKIV String
 
   correspondenceKeyCIPK String
 
@@ -123,8 +123,8 @@ model IndividualLv3ACorrespondenceRequest {
   from   IndividualLv2ACorrespondenceRequest @relation(fields: [fromId], references: [id], onDelete: Cascade)
   fromId String                              @unique
 
-  userDisplayNameCK   String
-  userDisplayNameCKIV String
+  initiatorDisplayNameCK   String
+  initiatorDisplayNameCKIV String
 }
 
 model Correspondent {
@@ -143,8 +143,8 @@ model Correspondent {
 
   correspondenceKeyMK   String
   correspondenceKeyMKIV String
-  userDisplayNameCK     String
-  userDisplayNameCKIV   String
+  displayNameCK         String
+  displayNameCKIV       String
 
   exchanges Exchange[]
 }
@@ -165,7 +165,7 @@ model Exchange {
 model Message {
   id String @id @default(uuid())
 
-  exchange   Exchange? @relation(fields: [exchangeId], references: [id])
+  exchange   Exchange? @relation(fields: [exchangeId], references: [id], onDelete: Cascade)
   exchangeId String?
 
   isImportant Boolean

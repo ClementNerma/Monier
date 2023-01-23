@@ -21,6 +21,8 @@ pnpm-debug.log*
 # Development SQLite database
 *.db
 *.db-journal
+*.sqlite
+*.sqlite-journal
 
 # Development files
 _dev/

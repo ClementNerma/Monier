@@ -13,19 +13,21 @@ type EncryptedRequests = inferRouterOutputs<AppRouter>['correspondenceRequest'][
 
 const props = defineProps<{
     encryptedRequests: EncryptedRequests
+    displayNameMK: string
+    displayNameMKIV: string
 }>()
 
 type RequestEntry = {
     req: EncryptedRequests[number]
-    displayName: string
+    targetDisplayName: string
     correspondenceKey: CryptoKey
 }
 
-function fetch() {
-    // TODO: actual refetch
+async function fetch(reload: boolean) {
+    const requests: EncryptedRequests = reload ? await trpc.correspondenceRequest.individuals.pendingFilledRequests.query() : props.encryptedRequests
 
     return Promise.allSettled(
-        props.encryptedRequests.map(async (req): Promise<RequestEntry> => {
+        requests.map(async (req): Promise<RequestEntry> => {
             const masterKey = await expectMasterKey()
 
             const correspondenceInitPrivateKeyJWK = expectOk(
@@ -46,33 +48,43 @@ function fetch() {
 
             const correspondenceKey = expectOk(await importKeyFromTRPC(correspondenceKeyJWK, 'sym', true))
 
-            const displayName = expectOk(
-                await decryptTextSymFromTRPC(req.userDisplayNameCK, req.userDisplayNameCKIV, correspondenceKey),
+            const targetDisplayName = expectOk(
+                await decryptTextSymFromTRPC(req.targetDisplayNameCK, req.targetDisplayNameCKIV, correspondenceKey),
             )
 
-            return { displayName, req, correspondenceKey }
+            return { targetDisplayName, req, correspondenceKey }
         }),
     )
 }
 
-async function answerRequest({ displayName, req, correspondenceKey }: RequestEntry) {
+async function answerRequest({ req, correspondenceKey }: RequestEntry) {
     const masterKey = await expectMasterKey()
 
-    await trpc.correspondenceRequest.individuals.answerFilledRequest.mutate({
-        correspondenceInitID: req.from.correspondenceInitID,
-        correspondenceKeyMK: await encryptTextSymForTRPC(await exportKey(correspondenceKey), masterKey),
-        userDisplayNameCK: await encryptTextSymForTRPC(displayName, correspondenceKey),
-    })
+    const displayName = await decryptTextSymFromTRPC(props.displayNameMK, props.displayNameMKIV, masterKey)
+
+    if (displayName instanceof Error) {
+        return alert(`Failed to decrypt current user's display name: ${displayName.message}`)
+    }
+
+    try {
+        await trpc.correspondenceRequest.individuals.answerFilledRequest.mutate({
+            correspondenceInitID: req.from.correspondenceInitID,
+            correspondenceKeyMK: await encryptTextSymForTRPC(await exportKey(correspondenceKey), masterKey),
+            initiatorDisplayNameCK: await encryptTextSymForTRPC(displayName, correspondenceKey),
+        })
+    } catch (e) {
+        return alert(`Failed to confirm: ${e instanceof Error ? e.message : '<unknown error>'}`)
+    }
 
     alert('Success!')
 
-    requests.value = await fetch()
+    requests.value = await fetch(true)
 }
 
 const requests = ref<PromiseSettledResult<RequestEntry>[] | null>(null)
 
 onMounted(async () => {
-    requests.value = await fetch()
+    requests.value = await fetch(false)
 })
 </script>
 
@@ -97,7 +109,7 @@ onMounted(async () => {
                 </td>
 
                 <template v-else>
-                    <td>{{ request.value.displayName }}</td>
+                    <td>{{ request.value.targetDisplayName }}</td>
                     <td><button @click="() => answerRequest(request.value)">Confirm</button></td>
                 </template>
             </tr>
