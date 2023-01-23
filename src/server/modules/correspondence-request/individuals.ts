@@ -341,6 +341,8 @@ export default createRouter({
 
 						displayNameCK: into.initiatorDisplayNameCK,
 						displayNameCKIV: into.initiatorDisplayNameCKIV,
+
+						serverUrl: base.serverUrl,
 					},
 				}),
 			])
@@ -403,6 +405,8 @@ export default createRouter({
 
 						displayNameCK: base.into.targetDisplayNameCK,
 						displayNameCKIV: base.into.targetDisplayNameCKIV,
+
+						serverUrl: base.into.serverUrl,
 					},
 				}),
 			])
