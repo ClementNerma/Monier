@@ -53,8 +53,8 @@ const data = await parallel({
                 <td>
                   <Decrypt
                     client:only
-                    data={corr.userDisplayNameCK}
-                    iv={corr.userDisplayNameCKIV}
+                    data={corr.displayNameCK}
+                    iv={corr.displayNameCKIV}
                     decrypt={{
                       with: "jwkMK",
                       content: corr.correspondenceKeyMK,
@@ -74,6 +74,8 @@ const data = await parallel({
 
       <PendingFilledCorrespondenceRequests
         client:only
+        displayNameMK={viewer.displayNameMK}
+        displayNameMKIV={viewer.displayNameMKIV}
         encryptedRequests={data.pendingFilledCorrespondenceRequests}
       />
 
