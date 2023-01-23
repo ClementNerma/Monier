@@ -18,7 +18,7 @@ const messageInput = z.object({
 })
 
 export default createRouter({
-	listMessages: authProcedure.query(({ ctx }) =>
+	list: authProcedure.query(({ ctx }) =>
 		ctx.db.message.findMany({
 			where: { exchange: { userId: ctx.viewer.id } },
 			include: {
