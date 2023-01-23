@@ -38,7 +38,7 @@ export default createRouter({
 	),
 
 	// From sender (client) to sender (server)
-	sendMessage: authProcedure
+	send: authProcedure
 		.input(z.object({ correspondentId: z.string(), exchangeId: z.string().nullable(), message: messageInput }))
 		.mutation(async ({ ctx, input }) => {
 			const correspondent = await getCorrespondent(ctx.db, input.correspondentId, ctx.viewer)
@@ -58,7 +58,7 @@ export default createRouter({
 
 			const distantApi = createApiClient(correspondent.serverUrl)
 
-			await distantApi.messages.receiveMessage.mutate({
+			await distantApi.messages.receive.mutate({
 				accessToken: correspondent.outgoingAccessToken,
 				exchangeId: exchange.id,
 				newExchange: input.exchangeId === null,
@@ -69,7 +69,7 @@ export default createRouter({
 		}),
 
 	// From sender (server) to recipient (server)
-	receiveMessage: publicProcedure
+	receive: publicProcedure
 		.input(
 			z.object({ accessToken: z.string(), exchangeId: z.string(), newExchange: z.boolean(), message: messageInput }),
 		)
