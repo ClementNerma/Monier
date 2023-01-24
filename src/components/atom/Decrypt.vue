@@ -61,7 +61,9 @@ async function getKey(key: Decrypt): Promise<CryptoKey | Error> {
 }
 
 const error = ref('')
-const display = ref('')
+
+// Use a non-breaking space by default to ensure layout won't change after actual loading
+const display = ref('\xa0')
 
 onMounted(async () => {
 	const key = await getKey(props.decrypt)
