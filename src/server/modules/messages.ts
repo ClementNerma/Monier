@@ -8,6 +8,7 @@ import { correspondentAuth, getCorrespondent } from './correspondents'
 import type { Context } from '../context'
 import type { Correspondent, Exchange, Message } from '@prisma/client'
 import { createApiClient } from '../../common/trpc-client'
+import { paginateResponse, paginationInput, paginationParams } from '../utils'
 
 const messageInput = z.object({
 	isImportant: z.boolean(),
@@ -18,18 +19,21 @@ const messageInput = z.object({
 })
 
 export default createRouter({
-	list: authProcedure.query(({ ctx }) =>
-		ctx.db.message.findMany({
-			where: { exchange: { userId: ctx.viewer.id } },
-			include: {
-				exchange: {
-					include: {
-						correspondent: true,
+	list: authProcedure.input(z.object({ pagination: paginationInput })).query(({ ctx, input }) =>
+		paginateResponse(
+			input.pagination,
+			ctx.db.message.findMany({
+				where: { exchange: { userId: ctx.viewer.id } },
+				include: {
+					exchange: {
+						include: {
+							correspondent: true,
+						},
 					},
 				},
-			},
-			orderBy: { createdAt: 'desc' },
-		}),
+				...paginationParams(input.pagination),
+			}),
+		),
 	),
 
 	// From sender (client) to sender (server)

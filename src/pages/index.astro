@@ -12,7 +12,13 @@ if (!viewer) {
 }
 
 const data = await parallel({
-  messages: app.messages.list(),
+  messages: app.messages.list({
+    pagination: {
+      cursor: null,
+      limit: 20,
+      order: 'desc'
+    }
+  }),
   correspondents: app.correspondents.list(),
   pendingFilledCorrespondenceRequests:
     app.correspondenceRequest.individuals.pendingFilledRequests(),
