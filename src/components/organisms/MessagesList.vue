@@ -12,14 +12,25 @@ const props = defineProps<Props>()
 
 <template>
     <table>
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Title</th>
+                <th>Date & time</th>
+            </tr>
+        </thead>
         <tbody>
             <tr v-for="message in props.messages">
+                <td>
+                    <Decrypt :data="message.categoryCK" :iv="message.categoryCKIV"
+                        :decrypt="{ with: 'jwkMK', content: message.exchange.correspondent.correspondenceKeyMK, iv: message.exchange.correspondent.correspondenceKeyMKIV }" />
+                </td>
                 <td>
                     <strong v-if="message.isImportant">[IMPORTANT]</strong>
                     <Decrypt :data="message.titleCK" :iv="message.titleCKIV"
                         :decrypt="{ with: 'jwkMK', content: message.exchange.correspondent.correspondenceKeyMK, iv: message.exchange.correspondent.correspondenceKeyMKIV }" />
                 </td>
-                <td>{{ message.createdAt }}</td>
+                <td>{{ message.createdAt.toLocaleString() }}</td>
             </tr>
         </tbody>
     </table>
