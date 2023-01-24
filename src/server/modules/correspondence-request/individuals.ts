@@ -92,7 +92,7 @@ export default createRouter({
 					correspondenceInitID: input.correspondenceInitID,
 					correspondenceKeyCIPK: input.correspondenceKeyCIPK,
 					targetDisplayNameCK: input.targetDisplayNameCK,
-					serverUrl: CONFIG.CURRENT_SERVER_URL,
+					serverUrl: `${CONFIG.CURRENT_SERVER_URL}:${CONFIG.CURRENT_SERVER_PORT}`,
 				}),
 			)
 

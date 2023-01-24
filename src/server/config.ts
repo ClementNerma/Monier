@@ -31,5 +31,6 @@ const int: Parser<number> = (value) => {
 
 export const CONFIG = parseEnv({
 	CURRENT_SERVER_URL: string,
+	CURRENT_SERVER_PORT: int,
 	SESSION_EXPIRES_AFTER_HOURS: int,
 })
