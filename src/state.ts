@@ -2,6 +2,7 @@ import { CONSTANTS } from './common/constants'
 import { generateCookieEntry, getCookie } from './common/cookies'
 import { exportKey, importKey, parseJWK } from './common/crypto'
 import { createStore } from './common/stores'
+import { isBrowser } from './common/utils'
 
 function getSavedCredentials() {
 	const accessToken = getCookie(document.cookie, CONSTANTS.cookieNames.accessToken)
@@ -36,7 +37,7 @@ function getSavedCredentials() {
 	})
 }
 
-export const savedCredentials = createStore(getSavedCredentials())
+export const savedCredentials = createStore(isBrowser ? getSavedCredentials() : null)
 
 savedCredentials.listen(async (promise) => {
 	if (!promise) {

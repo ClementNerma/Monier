@@ -22,5 +22,5 @@ const data = await parallel({
 ---
 
 <Layout title="Home">
-  <HomePage client:only viewer={viewer} {...data} />
+  <HomePage client:load viewer={viewer} {...data} />
 </Layout>

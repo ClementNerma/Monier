@@ -4,7 +4,7 @@ import { serializeBuffer } from '../../common/base64';
 import { generateSymmetricKey, exportKey, encryptAsym } from '../../common/crypto';
 import { decryptTextSymFromTRPC, importKeyFromTRPC, encryptSymForTRPC, encryptTextSymForTRPC } from '../../common/crypto-trpc';
 import { createApiClient } from '../../common/trpc-client';
-import { expectOk, textToBuffer } from '../../common/utils';
+import { expectOk, isBrowser, textToBuffer } from '../../common/utils';
 import { expectMasterKey } from '../../state';
 import { trpc } from '../../trpc-client';
 
@@ -14,7 +14,7 @@ const props = defineProps<{
 }>()
 
 const correspondenceCode = ref('')
-const serverUrl = ref(location.origin)
+const serverUrl = ref(isBrowser ? location.origin : '')
 const status = ref('')
 
 async function submit() {
