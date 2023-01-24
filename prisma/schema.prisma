@@ -1,5 +1,9 @@
 generator client {
   provider = "prisma-client-js"
+
+  // HACK: Fix specified in https://github.com/prisma/prisma/issues/10649#issuecomment-1249209025
+  // Required until https://github.com/prisma/prisma/issues/10649 gets solved
+  engineType = "binary"
 }
 
 datasource db {
