@@ -14,6 +14,8 @@ const props = defineProps<Props>()
     <table>
         <thead>
             <tr>
+                <th>Sender</th>
+                <th>Recipient</th>
                 <th>Category</th>
                 <th>Title</th>
                 <th>Date & time</th>
@@ -21,6 +23,18 @@ const props = defineProps<Props>()
         </thead>
         <tbody>
             <tr v-for="message in props.messages">
+                <td>
+                    <em v-if="message.isSender">You</em>
+                    <Decrypt v-else :data="message.exchange.correspondent.displayNameCK"
+                        :iv="message.exchange.correspondent.displayNameCKIV"
+                        :decrypt="{ with: 'jwkMK', content: message.exchange.correspondent.correspondenceKeyMK, iv: message.exchange.correspondent.correspondenceKeyMKIV }" />
+                </td>
+                <td>
+                    <Decrypt v-if="message.isSender" :data="message.exchange.correspondent.displayNameCK"
+                        :iv="message.exchange.correspondent.displayNameCKIV"
+                        :decrypt="{ with: 'jwkMK', content: message.exchange.correspondent.correspondenceKeyMK, iv: message.exchange.correspondent.correspondenceKeyMKIV }" />
+                    <em v-else>You</em>
+                </td>
                 <td>
                     <Decrypt :data="message.categoryCK" :iv="message.categoryCKIV"
                         :decrypt="{ with: 'jwkMK', content: message.exchange.correspondent.correspondenceKeyMK, iv: message.exchange.correspondent.correspondenceKeyMKIV }" />

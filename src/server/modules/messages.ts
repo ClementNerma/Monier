@@ -24,12 +24,7 @@ export default createRouter({
 			include: {
 				exchange: {
 					include: {
-						correspondent: {
-							select: {
-								correspondenceKeyMK: true,
-								correspondenceKeyMKIV: true,
-							},
-						},
+						correspondent: true,
 					},
 				},
 			},
@@ -137,8 +132,10 @@ function createMessage(
 
 			titleCK: input.titleCK.content,
 			titleCKIV: input.titleCK.iv,
+
 			categoryCK: input.categoryCK.content,
 			categoryCKIV: input.categoryCK.iv,
+
 			bodyCK: input.bodyCK.content,
 			bodyCKIV: input.bodyCK.iv,
 		},
