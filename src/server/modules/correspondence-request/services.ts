@@ -96,10 +96,12 @@ export default createRouter({
 					isService: true,
 					isInitiator: false,
 
-					userDisplayNameCK: input.displayNameCK.content,
-					userDisplayNameCKIV: input.displayNameCK.iv,
+					displayNameCK: input.displayNameCK.content,
+					displayNameCKIV: input.displayNameCK.iv,
 					correspondenceKeyMK: request.correspondenceKeyMK,
 					correspondenceKeyMKIV: request.correspondenceKeyMKIV,
+
+					serverUrl: request.serverUrl,
 				},
 			})
 
