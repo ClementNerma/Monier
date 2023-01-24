@@ -3,6 +3,7 @@
   "compilerOptions": {
     // Strictness options
     "noPropertyAccessFromIndexSignature": true,
+    "exactOptionalPropertyTypes": false,
     // JSX configuration
     "jsx": "preserve",
     "jsxImportSource": "solid-js"
