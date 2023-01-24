@@ -101,7 +101,10 @@ export default createRouter({
 					where: { id },
 				})
 
-				throw result
+				throw new TRPCError({
+					code: 'INTERNAL_SERVER_ERROR',
+					message: `Failed to contact distant API: ${result.message}`,
+				})
 			}
 		}),
 
@@ -221,7 +224,10 @@ export default createRouter({
 					where: { id },
 				})
 
-				throw result
+				throw new TRPCError({
+					code: 'INTERNAL_SERVER_ERROR',
+					message: `Failed to contact distant API: ${result.message}`,
+				})
 			}
 		}),
 
