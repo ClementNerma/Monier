@@ -179,6 +179,7 @@ model Message {
   exchangeId String
 
   isSender Boolean
+  wasRead  Boolean @default(false)
 
   isImportant Boolean
 
@@ -200,6 +201,8 @@ model Notification {
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
+
+  wasRead Boolean
 
   isImportant Boolean
 

@@ -19,22 +19,34 @@ const messageInput = z.object({
 })
 
 export default createRouter({
-	list: authProcedure.input(z.object({ pagination: paginationInput })).query(({ ctx, input }) =>
-		paginateResponse(
-			input.pagination,
-			ctx.db.message.findMany({
-				where: { exchange: { userId: ctx.viewer.id } },
-				include: {
-					exchange: {
-						include: {
-							correspondent: true,
+	list: authProcedure
+		.input(
+			z.object({
+				pagination: paginationInput,
+				filters: z.object({
+					unreadOnly: z.boolean().optional(),
+				}),
+			}),
+		)
+		.query(({ ctx, input }) =>
+			paginateResponse(
+				input.pagination,
+				ctx.db.message.findMany({
+					where: {
+						exchange: { userId: ctx.viewer.id },
+						wasRead: input.filters?.unreadOnly ? true : undefined,
+					},
+					include: {
+						exchange: {
+							include: {
+								correspondent: true,
+							},
 						},
 					},
-				},
-				...paginationParams(input.pagination),
-			}),
+					...paginationParams(input.pagination),
+				}),
+			),
 		),
-	),
 
 	// From sender (client) to sender (server)
 	send: authProcedure

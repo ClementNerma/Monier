@@ -24,6 +24,9 @@ async function loadMore() {
             cursor: nextPageCursor.value,
             order: 'desc',
             limit: 10, // TODO: configurable
+        },
+        filters: {
+            unreadOnly: true
         }
     })
 
