@@ -9,6 +9,7 @@ import PendingFilledCorrespondenceRequests from "../components/organisms/Pending
 import PendingFullyFilledCorrespondenceRequests from "../components/organisms/PendingFullyFilledCorrespondenceRequests.vue";
 import WriteMessage from "../components/organisms/WriteMessage.vue";
 import MessagesList from "../components/organisms/MessagesList.vue";
+import CorrespondentsList from "../components/organisms/CorrespondentsList.vue";
 
 const app = await serverApp(Astro);
 const viewer = await app.server.viewer();
@@ -51,37 +52,7 @@ const data = await parallel({
     <div class="container">
       <h3>Correspondents</h3>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Nom</th>
-            <th>Service ?</th>
-            <th>Initiateur ?</th>
-          </tr>
-        </thead>
-        <tbody>
-          {
-            data.correspondents.map((corr) => (
-              <tr>
-                <td>
-                  <Decrypt
-                    client:only
-                    data={corr.displayNameCK}
-                    iv={corr.displayNameCKIV}
-                    decrypt={{
-                      with: "jwkMK",
-                      content: corr.correspondenceKeyMK,
-                      iv: corr.correspondenceKeyMKIV,
-                    }}
-                  />
-                </td>
-                <td>{corr.isService ? "Yes" : "No"}</td>
-                <td>{corr.isInitiator ? "Yes" : "No"}</td>
-              </tr>
-            ))
-          }
-        </tbody>
-      </table>
+      <CorrespondentsList client:only correspondents={data.correspondents} />
 
       <h3>On-hold correspondence requests</h3>
 
