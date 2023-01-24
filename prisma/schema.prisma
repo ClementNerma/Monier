@@ -178,6 +178,8 @@ model Message {
 
   createdAt DateTime @default(now())
 
+  isSender Boolean
+
   isImportant Boolean
 
   titleCK   String

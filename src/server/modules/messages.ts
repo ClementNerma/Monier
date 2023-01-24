@@ -65,7 +65,7 @@ export default createRouter({
 				message: input.message,
 			})
 
-			await createMessage(ctx.db, input.message, exchange)
+			await createMessage(ctx.db, input.message, exchange, 'sender')
 		}),
 
 	// From sender (server) to recipient (server)
@@ -89,7 +89,7 @@ export default createRouter({
 						userId: correspondent.forUserId,
 				  }))
 
-			await createMessage(ctx.db, input.message, exchange)
+			await createMessage(ctx.db, input.message, exchange, 'recipient')
 
 			return { exchangeId: exchange.id }
 		}),
@@ -122,17 +122,25 @@ async function getExchange(
 	return exchange
 }
 
-function createMessage(db: Context['db'], input: z.infer<typeof messageInput>, exchange: Exchange): Promise<Message> {
+function createMessage(
+	db: Context['db'],
+	input: z.infer<typeof messageInput>,
+	exchange: Exchange,
+	side: 'sender' | 'recipient',
+): Promise<Message> {
 	return db.message.create({
 		data: {
 			exchangeId: exchange.id,
+
+			isSender: side === 'sender',
+			isImportant: input.isImportant,
+
 			titleCK: input.titleCK.content,
 			titleCKIV: input.titleCK.iv,
 			categoryCK: input.categoryCK.content,
 			categoryCKIV: input.categoryCK.iv,
 			bodyCK: input.bodyCK.content,
 			bodyCKIV: input.bodyCK.iv,
-			isImportant: input.isImportant,
 		},
 	})
 }
