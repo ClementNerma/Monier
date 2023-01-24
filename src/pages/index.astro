@@ -1,15 +1,8 @@
 ---
 import { parallel } from "../common/utils";
 import Layout from "../Layout.astro";
-import Decrypt from "../components/atom/Decrypt.vue";
 import { serverApp } from "../server";
-import CorrespondenceCodeGenerator from "../components/organisms/CorrespondenceCodeGenerator.vue";
-import CorrespondenceCodeInput from "../components/organisms/CorrespondenceCodeInput.vue";
-import PendingFilledCorrespondenceRequests from "../components/organisms/PendingFilledCorrespondenceRequests.vue";
-import PendingFullyFilledCorrespondenceRequests from "../components/organisms/PendingFullyFilledCorrespondenceRequests.vue";
-import WriteMessage from "../components/organisms/WriteMessage.vue";
-import MessagesList from "../components/organisms/MessagesList.vue";
-import CorrespondentsList from "../components/organisms/CorrespondentsList.vue";
+import HomePage from "../components/pages/HomePage.vue";
 
 const app = await serverApp(Astro);
 const viewer = await app.server.viewer();
@@ -29,69 +22,5 @@ const data = await parallel({
 ---
 
 <Layout title="Home">
-  <main>
-    <h2>
-      <Decrypt
-        client:only
-        data={viewer.displayNameMK}
-        iv={viewer.displayNameMKIV}
-        decrypt={{ with: "masterKey" }}
-      />
-    </h2>
-
-    <div class="container">
-      <h3>Messages list</h3>
-
-      <MessagesList client:only messages={data.messages} />
-    </div>
-
-    <div class="container">
-      <h3>Write a message</h3>
-
-      <WriteMessage client:only correspondents={data.correspondents} />
-    </div>
-
-    <div class="container">
-      <h3>Correspondents</h3>
-
-      <CorrespondentsList client:only correspondents={data.correspondents} />
-
-      <h3>On-hold correspondence requests</h3>
-
-      <PendingFilledCorrespondenceRequests
-        client:only
-        displayNameMK={viewer.displayNameMK}
-        displayNameMKIV={viewer.displayNameMKIV}
-        encryptedRequests={data.pendingFilledCorrespondenceRequests}
-      />
-
-      <h3>Fully-filled correspondence requests</h3>
-
-      <PendingFullyFilledCorrespondenceRequests
-        client:only
-        encryptedRequests={data.pendingFullyFilledCorrespondenceRequests}
-      />
-
-      <br />
-
-      <div class="container">
-        <CorrespondenceCodeGenerator client:only />
-      </div>
-
-      <div class="container">
-        <CorrespondenceCodeInput
-          displayNameMK={viewer.displayNameMK}
-          displayNameMKIV={viewer.displayNameMKIV}
-          client:only
-        />
-      </div>
-    </div>
-  </main>
+  <HomePage client:only viewer={viewer} {...data} />
 </Layout>
-
-<style>
-  .container {
-    border: 1px solid black;
-    padding: 1rem;
-  }
-</style>
