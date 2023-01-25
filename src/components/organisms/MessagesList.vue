@@ -4,6 +4,7 @@ import type { AppRouter } from '../../server';
 import Decrypt from '../atom/Decrypt.vue';
 import { ref } from 'vue';
 import { trpc } from '../../trpc-client';
+import { pickEncrypted } from '../../common/domain-utils';
 
 export interface Props {
     messages: inferProcedureOutput<AppRouter['messages']['list']>
@@ -51,24 +52,23 @@ async function loadMore() {
             <tr v-for="message in messages.items">
                 <td>
                     <em v-if="message.isSender">You</em>
-                    <Decrypt v-else :data="message.exchange.correspondent.displayNameCK"
-                        :iv="message.exchange.correspondent.displayNameCKIV"
-                        :decrypt="{ with: 'jwkMK', content: message.exchange.correspondent.correspondenceKeyMK, iv: message.exchange.correspondent.correspondenceKeyMKIV }" />
+                    <Decrypt v-else :data="pickEncrypted(message.exchange.correspondent, 'displayNameCK')"
+                        :decrypt="{ with: 'jwkMK', content: pickEncrypted(message.exchange.correspondent, 'correspondenceKeyMK') }" />
                 </td>
                 <td>
-                    <Decrypt v-if="message.isSender" :data="message.exchange.correspondent.displayNameCK"
-                        :iv="message.exchange.correspondent.displayNameCKIV"
-                        :decrypt="{ with: 'jwkMK', content: message.exchange.correspondent.correspondenceKeyMK, iv: message.exchange.correspondent.correspondenceKeyMKIV }" />
+                    <Decrypt v-if="message.isSender"
+                        :data="pickEncrypted(message.exchange.correspondent, 'displayNameCK')"
+                        :decrypt="{ with: 'jwkMK', content: pickEncrypted(message.exchange.correspondent, 'correspondenceKeyMK') }" />
                     <em v-else>You</em>
                 </td>
                 <td>
-                    <Decrypt :data="message.categoryCK" :iv="message.categoryCKIV"
-                        :decrypt="{ with: 'jwkMK', content: message.exchange.correspondent.correspondenceKeyMK, iv: message.exchange.correspondent.correspondenceKeyMKIV }" />
+                    <Decrypt :data="pickEncrypted(message, 'categoryCK')"
+                        :decrypt="{ with: 'jwkMK', content: pickEncrypted(message.exchange.correspondent, 'correspondenceKeyMK') }" />
                 </td>
                 <td>
                     <strong v-if="message.isImportant">[IMPORTANT]</strong>
-                    <Decrypt :data="message.titleCK" :iv="message.titleCKIV"
-                        :decrypt="{ with: 'jwkMK', content: message.exchange.correspondent.correspondenceKeyMK, iv: message.exchange.correspondent.correspondenceKeyMKIV }" />
+                    <Decrypt :data="pickEncrypted(message, 'titleCK')"
+                        :decrypt="{ with: 'jwkMK', content: pickEncrypted(message.exchange.correspondent, 'correspondenceKeyMK') }" />
                 </td>
                 <td>{{ message.createdAt.toLocaleString() }}</td>
             </tr>

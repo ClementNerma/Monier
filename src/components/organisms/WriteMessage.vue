@@ -8,6 +8,7 @@ import { trpc } from '../../trpc-client';
 import { decryptTextSymFromTRPC, encryptTextSymForTRPC, importKeyFromTRPC } from '../../common/crypto-trpc';
 import { expectOk } from '../../common/utils';
 import { expectMasterKey } from '../../state';
+import { pickEncrypted } from '../../common/domain-utils'
 
 export interface Props {
     correspondents: inferProcedureOutput<AppRouter['correspondents']['list']>
@@ -76,8 +77,8 @@ let body = ref('')
             <select v-model="correspondentId" required>
                 <option disabled value="">Please select a correspondent</option>
                 <option v-for="correspondent in correspondents" :value="correspondent.id">
-                    <Decrypt :data="correspondent.displayNameCK" :iv="correspondent.displayNameCKIV"
-                        :decrypt="{ with: 'jwkMK', content: correspondent.correspondenceKeyMK, iv: correspondent.correspondenceKeyMKIV }" />
+                    <Decrypt :data="pickEncrypted(correspondent, 'displayNameCK')"
+                        :decrypt="{ with: 'jwkMK', content: pickEncrypted(correspondent, 'correspondenceKeyMK') }" />
                 </option>
             </select>
         </div>

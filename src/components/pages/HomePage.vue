@@ -9,6 +9,7 @@ import PendingFilledCorrespondenceRequests from '../organisms/PendingFilledCorre
 import PendingFullyFilledCorrespondenceRequests from '../organisms/PendingFullyFilledCorrespondenceRequests.vue';
 import CorrespondenceCodeInput from '../organisms/CorrespondenceCodeInput.vue';
 import CorrespondenceCodeGenerator from '../organisms/CorrespondenceCodeGenerator.vue';
+import { pickEncrypted } from '../../common/domain-utils'
 import type { User } from '@prisma/client';
 
 export interface Props {
@@ -26,7 +27,7 @@ const props = defineProps<Props>()
 
 <template>
     <h2>
-        <Decrypt :data="viewer.displayNameMK" :iv="viewer.displayNameMKIV" :decrypt="{ with: 'masterKey' }" />
+        <Decrypt :data="pickEncrypted(viewer, 'displayNameMK')" :decrypt="{ with: 'masterKey' }" />
     </h2>
 
     <div class="container">

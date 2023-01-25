@@ -3,10 +3,10 @@ import { onMounted, ref } from 'vue';
 import { expectMasterKey } from '../../state';
 import { decryptTextSymFromTRPC, importKeyFromTRPC } from '../../common/crypto-trpc';
 import ErrorMessage from './ErrorMessage.vue';
+import type { SymEncrypted } from '../../common/crypto-trpc';
 
 const props = defineProps<{
-	data: string,
-	iv: string,
+	data: SymEncrypted
 	decrypt: Decrypt
 }>()
 
@@ -18,7 +18,7 @@ type Decrypt =
 	// Plain text JWK key
 	| { with: 'jwk'; content: string }
 	// JWK symmetryc key encrypted with the Master Key
-	| { with: 'jwkMK'; content: string; iv: string }
+	| { with: 'jwkMK'; content: SymEncrypted }
 
 async function getKey(key: Decrypt): Promise<CryptoKey | Error> {
 	if (key.with === 'direct') {
@@ -40,7 +40,7 @@ async function getKey(key: Decrypt): Promise<CryptoKey | Error> {
 			return masterKey
 		}
 
-		const keyJWK = await decryptTextSymFromTRPC(key.content, key.iv, masterKey)
+		const keyJWK = await decryptTextSymFromTRPC(key.content.content, key.content.iv, masterKey)
 
 		if (keyJWK instanceof Error) {
 			return new Error('Failed to decode the second layer encryption key')
@@ -73,7 +73,7 @@ onMounted(async () => {
 		return
 	}
 
-	const result = await decryptTextSymFromTRPC(props.data, props.iv, key)
+	const result = await decryptTextSymFromTRPC(props.data.content, props.data.iv, key)
 
 	if (result instanceof Error) {
 		error.value = result.message
