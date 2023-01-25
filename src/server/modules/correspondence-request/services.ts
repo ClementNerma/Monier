@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { generateRandomUUID } from '../../../common/crypto'
 import { pick } from '../../../common/utils'
 import { createRouter } from '../../router'
-import { zSymEncrypted, SymEncrypted } from '../../types'
+import { zSymEncrypted } from '../../../common/domain-utils'
 import { authProcedure } from '../auth'
 
 export default createRouter({
@@ -34,7 +34,7 @@ export default createRouter({
 				correspondenceRequestId: z.string(),
 			}),
 		)
-		.query<{ correspondenceKey: SymEncrypted }>(async ({ ctx, input }) => {
+		.query(async ({ ctx, input }) => {
 			const request = await ctx.db.serviceCorrespondenceRequest.findUnique({
 				where: {
 					correspondenceRequestId: input.correspondenceRequestId,
@@ -68,7 +68,7 @@ export default createRouter({
 				displayNameCK: zSymEncrypted,
 			}),
 		)
-		.mutation<{ correspondentId: string }>(async ({ ctx, input }) => {
+		.mutation(async ({ ctx, input }) => {
 			const request = await ctx.db.serviceCorrespondenceRequest.findUnique({
 				where: pick(input, ['correspondenceRequestId']),
 			})

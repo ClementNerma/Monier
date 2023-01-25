@@ -1,7 +1,11 @@
-import type { SymEncrypted } from '../server/types'
 import { deserializeBuffer, serializeBuffer } from './base64'
 import { decryptAsym, decryptSym, encryptSym, generateIV, importKey, parseJWK } from './crypto'
 import { bufferToText, textToBuffer } from './utils'
+
+export type SymEncrypted = Readonly<{
+	content: string
+	iv: string
+}>
 
 const importedKeys = new Map<string, CryptoKey>()
 

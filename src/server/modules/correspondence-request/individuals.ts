@@ -4,7 +4,7 @@ import { createApiClient } from '../../../common/trpc-client'
 import { generateRandomUUID } from '../../../common/crypto'
 import { fallible, pick } from '../../../common/utils'
 import { createRouter } from '../../router'
-import { zSymEncrypted } from '../../types'
+import { zSymEncrypted } from '../../../common/domain-utils'
 import { authProcedure, publicProcedure } from '../auth'
 import { CONFIG } from '../../config'
 

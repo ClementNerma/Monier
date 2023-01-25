@@ -2,7 +2,7 @@ import { createRouter } from '../router'
 import { z } from 'zod'
 import { authProcedure, publicProcedure } from './auth'
 import { TRPCError } from '@trpc/server'
-import { zSymEncrypted } from '../types'
+import { zSymEncrypted } from '../../common/domain-utils'
 import { pick } from '../../common/utils'
 import { generateRandomUUID } from '../../common/crypto'
 
