@@ -22,19 +22,13 @@ export interface Props {
     inferProcedureOutput<AppRouter['correspondenceRequest']['individuals']['pendingFullyFilledRequests']>,
 }
 
-const props = defineProps<Props>()
+const initData = defineProps<Props>()
 </script>
 
 <template>
-    <h2>
-        <Decrypt :data="pickEncrypted(viewer, 'displayNameMK')" :decrypt="{ with: 'masterKey' }" />
-    </h2>
+    <h2>Inbox</h2>
 
-    <div class="container">
-        <h3>Messages list</h3>
-
-        <MessagesList :messages="props.messages" />
-    </div>
+    <MessagesList :messages="initData.messages" />
 
     <div class="container">
         <h3>Write a message</h3>
