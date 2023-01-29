@@ -22,13 +22,13 @@ export interface Props {
     inferProcedureOutput<AppRouter['correspondenceRequest']['individuals']['pendingFullyFilledRequests']>,
 }
 
-const initData = defineProps<Props>()
+const props = defineProps<Props>()
 </script>
 
 <template>
     <h2>Inbox</h2>
 
-    <MessagesList :messages="initData.messages" />
+    <MessagesList :messages="props.messages" />
 
     <div class="container">
         <h3>Write a message</h3>

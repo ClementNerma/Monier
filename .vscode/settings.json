@@ -8,5 +8,6 @@
     "[typescriptreact]": {
         "editor.defaultFormatter": "rome.rome"
     },
+    "deno.enable": true,
     // "typescript.tsserver.experimental.enableProjectDiagnostics": true
 }
